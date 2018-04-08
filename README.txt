@@ -4,8 +4,7 @@ AUTHOR
 
 Author: Krypton Nova (bion3@outlook.com)
 
-Feel free to send me a mail if you have suggestions or concerns regarding this script. My nation is
-inactive so DO NOT send it telegrams if you want me to read your message.
+Feel free to send me a mail if you have suggestions or concerns regarding this script.
 
 ------------------------------------------------------------------------------------------------------
 DISCLAIMER
