@@ -255,8 +255,25 @@ while update_end is None and t <= 7:
     t += 1
 
 # Calculate MAJOR update length #
-update_length_major = update_end - update_expected_start
-
+try:
+    update_length_major = update_end - update_expected_start
+except TypeError as error:
+    error_message = "Line 267: " + str(error) + "\n\n"
+    error_message += "Variable contents:\n" \
+                     "hour_now = " + str(hour_now) + "\n" \
+                     "date_today = " + date_today + "\n" \
+                     "posix_today = " + str(posix_today) + "\n" \
+                     "dumb_saving_time = " + str(dumb_saving_time) + "\n" \
+                     "update_expected_start = " + str(update_expected_start) + "\n" \
+                     "update_expected_end = " + str(update_expected_end) + "\n" \
+                     "update_end = " + str(update_end) + "\n" \
+                     "t = " + str(t) + "\n" \
+                     "changes_list = " + str(changes_list) + "\n\n" \
+                     "Caught error, please send error-report.txt to KN#4693 on Discord or bion3@outlook.com"
+    with open('error-report.txt', "w") as file:
+        file.write(error_message)
+    print(error_message)
+    quit()
 
 # Time intervals to check for MINOR (see posix time) #
 possible_times = [[posix_today + 61200, posix_today + 68400],
@@ -299,8 +316,25 @@ while update_end is None and t <= 7:
     t += 1
 
 # Calculate MINOR update length #
-update_length_minor = update_end - update_expected_start
-
+try:
+    update_length_minor = update_end - update_expected_start
+except TypeError as error:
+    error_message = "Caught error, please send error-report.txt to bion3@outlook.com: \n\n Line 327: " \
+                    + str(error) + "\n\n"
+    error_message += "Variable contents:\n" \
+                     "hour_now = " + str(hour_now) + "\n" \
+                     "date_today = " + date_today + "\n" \
+                     "posix_today = " + str(posix_today) + "\n" \
+                     "dumb_saving_time = " + str(dumb_saving_time) + "\n" \
+                     "update_expected_start = " + str(update_expected_start) + "\n" \
+                     "update_expected_end = " + str(update_expected_end) + "\n" \
+                     "update_end = " + str(update_end) + "\n" \
+                     "t = " + str(t) + "\n" \
+                     "changes_list = " + str(changes_list) + "\n"
+    with open('error-report.txt', "w") as file:
+        file.write(error_message)
+    print(error_message)
+    quit()
 
 # API requests should be less than 50/30s. Wait 1s to be safe #
 time.sleep(1)
