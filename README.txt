@@ -1,71 +1,115 @@
-------------------------------------------------------------------------------------------------------
-AUTHOR
-------------------------------------------------------------------------------------------------------
+# Kronos
 
-Author: Krypton Nova (bion3@outlook.com)
+### Latest release: **C1**
 
+
+## Author
+Krypton Nova (bion3@outlook.com)
 Feel free to send me a mail if you have suggestions or concerns regarding this script.
 
-------------------------------------------------------------------------------------------------------
-DISCLAIMER
-------------------------------------------------------------------------------------------------------
 
-Use this script and anything that comes with it at your own risk. I bear no responsibility whatsoever. 
+#### **Licence:**
+[GNU GPLv3](https://www.gnu.org/licenses/gpl.html)
 
-------------------------------------------------------------------------------------------------------
-REQUIREMENTS:
-------------------------------------------------------------------------------------------------------
 
+## REQUIREMENTS
 - 50 MB disk space
-- 100 MB RAM free during execution
-
-- The latest version of Python 3
-- The latest version of pip for Python 3
-- Python packages ("pip install name" on Windows, "pip3 install name" on Linux):
-	* pytz
+- 50 MB RAM during execution (150MB for timer)
+- The latest version of Python 3, including pip (https://www.python.org/downloads/)
+- Python packages (pip3 install ...):
+	* pytz 
 	* xlsxwriter
 
-------------------------------------------------------------------------------------------------------
-PURPOSE & USE
-------------------------------------------------------------------------------------------------------
 
-The main function of this script is to provide the update time of every region. It will provide some
-additional useful information such as the amount of nations in a region, information on the delegate
-and founder, information on password status, and a link to the region in question. The script usually 
-takes under one minute to finish, and only needs to be used once a day.
+## PURPOSE & USE
 
-This script should not be used in any way or for any purpose that defies site rules. As said in the 
-DISCLAIMER, I will bear no responsibility for anything you do with it.
+Kronos was made in python, and runs in the command line (Command Prompt, Powershell, Terminal).
+The square brackets below mean an argument is optional. You shouldn't type them.
 
-NOTE: For up to date results, do not run during an update.
+Syntax (Windows): 	python Kronos.py [-d] [-k] [-o] [-t]
+Syntax (Linux):    python3 Kronos.py [-d] [-k] [-o] [-t]
 
-------------------------------------------------------------------------------------------------------
-CONFIGURATION
-------------------------------------------------------------------------------------------------------
+-d, -detag
+	Similar to --kronos, but will limit output to detag-able regions.
 
-A User-Agent must be configured. The script asks you to either fill in your nation or email address.
-Use a nation or email address you check frequently so that you know it if something goes wrong.
+-k, -kronos
+	The main function of this option is to provide the update time of every region. It will 
+	provide some additional useful information such as the amount of nations in a region, 
+	information on the delegate and founder, information on password status, and a link to the 
+	region in question. It usually takes under one minute to finish, and only needs to be used 
+	once a day.
 
-------------------------------------------------------------------------------------------------------
-SCRIPT INTERNET USAGE
-------------------------------------------------------------------------------------------------------
+	NOTE: The most optimal time to run -kronos or -detag is an hour before major, although the
+	advantage is negligible.
+
+-o, -ops
+	This option allows you to find the (likely) military operations from the last update.
+
+-t, -timer
+	( This function is being tested for bugs and unexpected behaviour. Use at your own risk, and
+	please report any inconsistencies you find. )
+	Asks a target region, then runs a countdown to when it updates. Using this option implies 
+	[-k] if no Kronos sheet was found in the same folder as Kronos.py. The timer includes a
+	variance indicator. This indicator is how much the update differs from the previous update in
+	seconds, and is there to give you an idea on how stable it is. The timer's status gives you
+	warnings when applicable. These are the meanings of those warnings: 
+		"<!> Checking triggers.": Kronos is going trough the list of triggers to see which ones
+		have updated. The longer the time is between now and when the region updates, the longer
+		this takes. During this status the prediction is based on the previous update.
+		"<!> Using sheet times.": The prediction is based on the previous update. This happens
+		when update hasn't started yet, or for a short while after checking triggers.
+		"<!> Large region ahead!": There is a large difference in nations due to a large region. 
+		Update speed may change while such a region updates, which Kronos can't detect. This may 
+		result in an unpredictable jump in the countdown. Feeders and sinkers have a large impact. 
+		Keep this in mind if you see this warning as the timer approaches zero.
+
+
+## CONFIGURATION
+
+A User-Agent must be configured to comply with NS script rules. The script asks you to either fill 
+in your nation or email address. Use a nation or email address you check frequently so that you NS 
+can contact you if something goes wrong.
+
+
+## SCRIPT INTERNET USAGE
 
 The following is a description of the internet usage by this script. This script will NOT provide
-accurate or reliable data without internet access, though it still may be of some use in a select
-number of cases.
+accurate or reliable data without internet access, and is generally useless without it.
 
 There is a delay of one second between every call made to be safely within the API-limits imposed 
 by NS.
 
-This script will download one xml of which the name starts with .Regions (20-50 MB), if it is not 
-already present. This file is updated only once a day, even if you run the script more than once. 
-This is to reduce bandwith, strain on the servers and time.
+Depending on the selected options, the following may be downloaded from the NS API by Kronos:
 
-Additionally, it makes 4 API calls:
-- one to retrieve the total nation count
-- one to retrieve founderless regions
-- one to retrieve passworded regions
-- one to retrieve update length
+-kronos, -detag, -ops
+	* Regions tagged "invader"
+	* Regions tagged "defender"
 
-The information retrieved from those calls is not stored, so these are made every time you run the 
-script. Combined they are more or less 1 MB.
+-kronos, -detag
+	* Regions daily data dump
+	* "Changes" world happenings
+	* Total nation count
+	* Founderless regions
+	* Passworded regions
+
+-ops
+	* "Members" world happenings
+	* "Move" nation happenings
+
+When the script is finished it will tell you how much KiB of data it downloaded from the internet.
+
+
+## CHANGELOG
+
+**V2 (2018-06-05)
+
+* Added timer
+
+**C1 (2018-05-27)
+
+* Merged Kronos, Detag & OpFinder into one command line tool
+* Reduced RAM usage to under 50MiB
+* Added total data downloaded from the internet at end of script
+* Cleaned up the code a little bit
+
+

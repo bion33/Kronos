@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Create detag file
-cd (insert working directory here)
-python3 Kronos.py
+# Replace with arguments of your choice. "--help" or any other bad argument will return the help page.
+python3 Kronos.py --help
 
-# Move file to hosting directory
-sudo mv Kronos_* (insert hosting directory here)
+# Give you some information (you can safely remove it when you edit the above)
+echo Edit "run_kronos.sh" to use the above options.
 
-# Set correct permissions to hosting directory
-sudo chown -R root:www-data (insert hosting directory here)
-sudo chmod -R 450 (insert hosting directory here)
+# Wait for keypress to exit
+read -n1 -r -p "Press any key to continue..."
