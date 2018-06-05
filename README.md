@@ -4,7 +4,7 @@
 
 
 ## Author
-Krypton Nova (bion3@outlook.com)
+Krypton Nova (bion3@outlook.com)</br>
 Feel free to send me a mail if you have suggestions or concerns regarding this script.
 
 
@@ -41,7 +41,7 @@ Syntax (Linux):    python3 Kronos.py \[-d\] \[-k\] \[-o\] \[-t\]  </br>
 * This option allows you to find the (likely) military operations from the last update.
 
 -t, -timer  </br>
-* (This function is being tested for bugs and unexpected behaviour. Use at your own risk, and please report any inconsistencies you find.) Asks a target region, then runs a countdown to when it updates. Using this option implies -kronos if no sheet was found in the same folder as the script. The timer includes a variance indicator. This indicator is how much the update differs from the previous update in seconds, and is there to give you an idea on how stable it is. The timer's status gives you warnings when applicable. These are the meanings of those warnings: </br>
+* (This function is being tested for bugs and unexpected behaviour. Use at your own risk, and please report any inconsistencies you find.) Asks a target region, then runs a countdown to when it updates. Using this option implies -kronos if no sheet was found in the same folder as the script. The timer includes a variance indicator. This indicator is how much the update differs from the previous update in seconds, and is there to give you an idea on how stable it is. The timer's status gives you warnings when applicable: </br>
 **"<!> Checking triggers."**: Kronos is going trough the list of triggers to see which ones have updated. The longer the time is between now and when the region updates, the longer this takes. During this status the prediction is based on the previous update.  </br>
 **"<!> Using sheet times."**: The prediction is based on the previous update. This happens when update hasn't started yet, or for a short while after checking triggers.  </br>
 **"<!> Large region ahead!"**: There is a large difference in nations due to a large region. Update speed may change while such a region updates, which Kronos can't detect. This may result in an unpredictable jump in the countdown. Feeders and sinkers have a large impact. Keep this in mind if you see this warning as the timer approaches zero.  </br>
@@ -54,7 +54,9 @@ A User-Agent must be configured to comply with NS script rules. The script asks 
 
 ## SCRIPT INTERNET USAGE
 
-The following is a description of the internet usage by this script. This script will NOT provide accurate or reliable data without internet access, and is generally useless without it. There is a delay of one second between every call made to be safely within the API-limits imposed by NS. Depending on the selected options, the following may be downloaded from the NS API by Kronos:
+The following is a description of the internet usage by this script. This script will NOT provide accurate or reliable data without internet access, and is generally useless without it. 
+
+There is a delay of at least one second (with the exception of the timer when its status is "Checking triggers", in that case it is at least 0.6 seconds) between every call made to be safely within the API-limits imposed by NS. Depending on the selected options, the following may be downloaded from the NS API by Kronos:
 
 -kronos, -detag, -ops
 * Regions tagged "invader"
@@ -88,6 +90,6 @@ When the script is finished it will tell you how much KiB of data it downloaded 
 * Merged Kronos, Detag & OpFinder into one command line tool
 * Reduced RAM usage to under 50MiB
 * Added total data downloaded from the internet at end of script
-* Cleaned up the code a little bit
+* Cleaned up the code
 
 
