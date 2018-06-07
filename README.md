@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: **V2**
+### Latest release: **v2.1.0** (2018-06-07)
 
 
 ## Author
@@ -81,15 +81,22 @@ When the script is finished it will tell you how much KiB of data it downloaded 
 
 ## CHANGELOG
 
-#### V2 (2018-06-05)
+#### v2.1.0 (2018-06-07)
+
+* Resolved timer saying region updated right after checking triggers due to bad default variables.
+
+#### v2.0.0 (2018-06-05)
 
 * Added timer
 
-#### C1 (2018-05-27)
+#### v1.9.0 (2018-05-27)
 
 * Merged Kronos, Detag & OpFinder into one command line tool
 * Reduced RAM usage to under 50MiB
 * Added total data downloaded from the internet at end of script
 * Cleaned up the code
 
+#### v1.x.x
+
+* Kronos sheet generator
 

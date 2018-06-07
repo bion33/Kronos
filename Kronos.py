@@ -1010,11 +1010,12 @@ if arg_timer is True:
         global thread_error
         thread_error = None
         global _t
+        _posix_now = time()
         _t = 0
         _lastupdate = 0
-        _last_trigger = 0
+        _last_trigger = _posix_now - (old_seconds_per_nation * 200)
         _delta_cn = 200
-        _seconds_per_nation = 0.02
+        _seconds_per_nation = old_seconds_per_nation
         _spns = []
 
         # While the main code didn't exit
