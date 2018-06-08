@@ -74,10 +74,14 @@ else:
              "." + "\n"
     # Ask user info
     user_info = input(input_string)
-    print("\n")
     config += user_info
     with open("config.txt", "w") as f:
         f.write(config)
+    # Clear screen
+    if sysname == "nt":
+        system("cls")
+    else:
+        system("clear")
 
 # Set User-Agent
 user_agent = {"User-Agent": user_agent + user_info}
@@ -96,53 +100,64 @@ dumb_saving_time = utc.localize(datetime.utcnow())
 dumb_saving_time = (dumb_saving_time.astimezone(ns_timezone).dst() != timedelta(0))
 
 
-# Command line arguments
-cli_args = argv[1:]
+# Command line options
+cli_options = argv[1:]
 arg_detag = False
 arg_kronos = False
 arg_ops = False
 arg_timer = False
-possible_arguments = ["-d", "-detag", "-k", "-kronos", "-o", "-ops", "-t", "-timer"]
+possible_options = ["-d", "-detag", "-k", "-kronos", "-o", "-ops", "-t", "-timer"]
 # Command line help
-help_string = "Kronos Help Page\n" \
+help_string = "Kronos Quick Help\n" \
           "\n" \
-          "    Syntax: python Kronos.py [-d] [-k] [-o] [-t]\n" \
+          "    Syntax: Kronos [-d] [-k] [-o] [-t]\n" \
           "\n" \
-          "Arguments:\n" \
+          "Options:\n" \
           "  -d, -detag:   an update sheet limited to detag-able regions.\n" \
-          "  -k, -kronos:  the full update sheet. Default if no other arguments present.\n" \
+          "  -k, -kronos:  the full update times sheet.\n" \
           "  -o, -ops:     likely military operations from the last update.\n" \
           "  -t, -timer:   time to when a region updates. Implies [-k].\n" \
+          "\n" \
+          'See "Purpose & Use" in the README for more information.' \
           "\n"
 
-# If arguments were provided
-try:
-    # Check if arguments exist (otherwise it does the exception)
-    if cli_args[0]:
-        pass
-    # Check if the arguments provided are valid
-    for argument in cli_args:
-        # If a bad argument was found, show the help page
-        if argument not in possible_arguments:
-            print(help_string)
-            quit()
-        # Otherwise set variables according with provided arguments
-        elif argument == "-d" or argument == "-detag":
+correct_args = False
+while not cli_options or correct_args is False:
+    # If no options found, or they were reset previously because of a bad option
+    if not cli_options:
+        print(help_string)
+        cli_options = input("What do you want me to do?\nKronos ")
+        cli_options = cli_options.split(" ")
+    # Check if the options provided are valid
+    for option in cli_options:
+        option = option.replace("[", "").replace("]", "")
+        # If a bad option was found, user has to re-enter options
+        if option not in possible_options:
+            correct_args = False
+            cli_options = []
+            # Clear screen
+            if sysname == "nt":
+                system("cls")
+            else:
+                system("clear")
+        # Otherwise set variables according with provided options
+        elif option == "-d" or option == "-detag":
             arg_detag = True
-        elif argument == "-k" or argument == "-kronos":
+            correct_args = True
+        elif option == "-k" or option == "-kronos":
             arg_kronos = True
-        elif argument == "-o" or argument == "-ops":
+            correct_args = True
+        elif option == "-o" or option == "-ops":
             arg_ops = True
-        elif argument == "-t" or argument == "-timer":
+            correct_args = True
+        elif option == "-t" or option == "-timer":
             arg_timer = True
+            correct_args = True
             filename = "Kronos_" + date_today + ".xlsx"
             # Timer is dependent on an up to date Kronos sheet
             if not path.isfile(filename):
                 arg_kronos = True
-# If no arguments were provided
-except IndexError:
-    arg_kronos = True
-
+    
 
 # ------------------------------------------------- Common Functions ------------------------------------------------- #
 

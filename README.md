@@ -1,9 +1,9 @@
 # Kronos
 
-### Latest release: **v2.1.0** (2018-06-07)
+### Latest release: v2.2.0 (2018-06-08)
 
 
-## Author
+#### Author
 Krypton Nova (bion3@outlook.com)</br>
 Feel free to send me a mail if you have suggestions or concerns regarding this script.
 
@@ -23,22 +23,22 @@ Feel free to send me a mail if you have suggestions or concerns regarding this s
 
 ## PURPOSE & USE
 
-Kronos was made in python, and runs in the command line (Command Prompt, Powershell, Terminal). The square brackets below mean an argument is optional. You shouldn't type them.
+Kronos was made in python, and runs in the command line. In windows you can simply double-click "Kronos.exe" to use it, although it is advisable you read what the options below mean. The Windows syntax may be useful for you if you wish to run Kronos automatically (on a daily schedule, for example). On Linux run Kronos from the terminal with the below syntax. The brackets around each option mean it is optional, you shouldn't type them. 
 
-Syntax (Windows): 	python Kronos.py \[-d\] \[-k\] \[-o\] \[-t\]  </br>
-Syntax (Linux):    python3 Kronos.py \[-d\] \[-k\] \[-o\] \[-t\]  </br>
+Syntax (Windows):  ./Kronos.exe (-d) (-k) (-o) (-t)  </br>
+Syntax (Linux):    python3 Kronos.py (-d) (-k) (-o) (-t)  </br>
 
 -d, -detag  </br>
 * Similar to --kronos, but will limit output to detag-able regions.
 
 -k, -kronos  </br>
-* The main function of this option is to provide the update time of every region. It will provide some additional useful information such as the amount of nations in a region, information on the delegate and founder, information on password status, and a link to the region in question. It usually takes under one minute to finish, and only needs to be used once a day.
+* Provides a sheet with the update time of every region. It will provide some additional useful information such as the amount of nations in a region, information on the delegate and founder, information on password status, and a link to the region in question. It usually takes under one minute to finish, and only needs to be used once a day.
 
 	NOTE: The most optimal time to run -kronos or -detag is an hour before major, although the
 	advantage is negligible.
 
 -o, -ops  </br>
-* This option allows you to find the (likely) military operations from the last update.
+* Outputs a file with the (likely) military operations from the last update.
 
 -t, -timer  </br>
 * (This function is being tested for bugs and unexpected behaviour. Use at your own risk, and please report any inconsistencies you find.) Asks a target region, then runs a countdown to when it updates. Using this option implies -kronos if no sheet was found in the same folder as the script. The timer includes a variance indicator. This indicator is how much the update differs from the previous update in seconds, and is there to give you an idea on how stable it is. The timer's status gives you warnings when applicable: </br>
@@ -80,6 +80,11 @@ When the script is finished it will tell you how much KiB of data it downloaded 
 
 
 ## CHANGELOG
+
+#### v2.2.0 (2018-06-08)
+
+* Made Kronos more user-friendly and portable for Windows users by building it as an executable.
+* Changed the default operation of Kronos from creating a Kronos sheet to asking the user what to do.
 
 #### v2.1.0 (2018-06-07)
 
