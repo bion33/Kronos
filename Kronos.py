@@ -106,9 +106,9 @@ arg_detag = False
 arg_kronos = False
 arg_ops = False
 arg_timer = False
-possible_options = ["-d", "-detag", "-k", "-kronos", "-o", "-ops", "-t", "-timer"]
+possible_options = ["-d", "-detag", "-k", "-kronos", "-o", "-ops", "-t", "-timer", "-q", "-quit"]
 # Command line help
-help_string = "Kronos Quick Help\n" \
+help_string = "\nKronos Quick Help\n" \
           "\n" \
           "    Syntax: Kronos [-d] [-k] [-o] [-t]\n" \
           "\n" \
@@ -118,7 +118,8 @@ help_string = "Kronos Quick Help\n" \
           "  -o, -ops:     likely military operations from the last update.\n" \
           "  -t, -timer:   time to when a region updates. Implies [-k].\n" \
           "\n" \
-          'See "Purpose & Use" in the README for more information.' \
+          'See "Purpose & Use" in the README for more information.\n' \
+          "Use -q or -quit to quit." \
           "\n"
 
 correct_args = False
@@ -128,6 +129,8 @@ while not cli_options or correct_args is False:
         print(help_string)
         cli_options = input("What do you want me to do?\nKronos ")
         cli_options = cli_options.split(" ")
+        # White space after input
+        print("")
     # Check if the options provided are valid
     for option in cli_options:
         option = option.replace("[", "").replace("]", "")
@@ -140,6 +143,11 @@ while not cli_options or correct_args is False:
                 system("cls")
             else:
                 system("clear")
+        # If the user wishes to quit
+        elif option == "-q" or option == "-quit":
+            print("Goodbye!")
+            sleep(1)
+            quit()
         # Otherwise set variables according with provided options
         elif option == "-d" or option == "-detag":
             arg_detag = True
@@ -1338,5 +1346,9 @@ if arg_timer is True:
             sleep(1)
 
 # -------------------------------------------------------------------------------------------------------------------- #
+
+# End
 print("\nKronos downloaded " + str(ceil(downloaded / 1024)) + " KiB of data in total.\nGoodbye!\n")
+sleep(1.5)
+
 # -------------------------------------------------------------------------------------------------------------------- #
