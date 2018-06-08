@@ -6,7 +6,7 @@ COPY LICENSE "./Kronos"
 COPY batch.bat "./Kronos"
 
 :: Create Windows zip file
-7z a -tzip "Kronos-Windows.zip" "./Kronos"
+7z a -tzip "Kronos.zip" "./Kronos"
 
 :: Clean up
 ECHO Y | RMDIR /S "./Kronos"
@@ -20,7 +20,8 @@ COPY LICENSE "./Kronos"
 COPY bash.sh "./Kronos"
 
 :: Create Linux zip file
-7z a -tzip "Kronos-Linux.zip" "./Kronos"
+7z a -ttar "Kronos.tar" "./Kronos" | 7z a -si Kronos.tar.gz
 
 :: Clean up
+ECHO Y | DEL "./Kronos.tar"
 ECHO Y | RMDIR /S "./Kronos"
