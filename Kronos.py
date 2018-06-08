@@ -1190,6 +1190,7 @@ if arg_timer is True:
             # If update has already started, check for each trigger (from latest to earliest, as the list currently is)
             # that it hasn't updated yet
             posix_now = time()
+            interrupted = False
             if update_start < posix_now:
                 _t = 0
                 try:
@@ -1231,7 +1232,7 @@ if arg_timer is True:
                     if r == "KeyboardInterrupt":
                         print("\nTimer interrupted.")
                         sleep(1)
-                        break
+                        interrupted = True
                     else:
                         print("Unexpected error! Please report the below message. Press [Enter] to quit.\n")
                         print(format_exc())
@@ -1254,7 +1255,7 @@ if arg_timer is True:
             twd.start()
 
             # Update timer loop
-            while seconds_to_update > 0:
+            while seconds_to_update > 0 and interrupted is False:
                 # Current posix time
                 posix_now = time()
                 try:
