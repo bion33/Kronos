@@ -4,7 +4,7 @@
 
 
 #### Author
-Krypton Nova (bion3@outlook.com)</br>
+Krypton Nova (bion@disroot.org)</br>
 Feel free to send me a mail if you have suggestions or concerns regarding this script.
 
 
