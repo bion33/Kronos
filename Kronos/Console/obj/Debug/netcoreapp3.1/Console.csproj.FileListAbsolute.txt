@@ -1,0 +1,13 @@
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console.deps.json
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console.runtimeconfig.json
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console.runtimeconfig.dev.json
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Console.pdb
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.csprojAssemblyReference.cache
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.AssemblyInfoInputs.cache
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.AssemblyInfo.cs
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.csproj.CoreCompileInputs.cache
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.pdb
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.genruntimeconfig.cache
