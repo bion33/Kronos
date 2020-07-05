@@ -17,7 +17,7 @@ namespace Console.UI
         "  -t, -timer:   time to when a region updates. Implies [-k].\n" +
         "\n" +
         "See \"Purpose & Use\" in the README for more information.\n" +
-        "Use -q or -quit to quit." +
+        "Use -q or -quit to quit.\n" +
         "\n";
 
         public static List<ICommand> GetCommands(string[] initialArgs)

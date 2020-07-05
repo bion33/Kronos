@@ -1,6 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Console.Commands;
-using Console.Repo;
 using Console.UI;
 
 namespace Console

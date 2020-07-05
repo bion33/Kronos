@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -10,71 +11,48 @@ namespace Console.Commands
 {
     public class Ops : ICommand
     {
+        private struct DelegacyChange
+        {
+            public string region;
+            public string newDelegate;
+            public int changeTimeStamp;
+        }
+        
+        private enum OpType
+        {
+            Defence,
+            Suspicious,
+            Invasion
+        }
+        
         public async Task Run()
         {
-            UIConsole.Show("Compiling operations report...");
+            UIConsole.Show("Compiling operations report... \n");
             
             var api = Shared.Api;
             
             var start = GetStart();
-            var end = start + 7200;
+            var end = start + (3 * 3600);
 
-            var changes = await api.GetDelegateChangesBetween(start, end);
-            var invaders = await api.GetInvaders();
-            var defenders = await api.GetDefenders();
+            var changes = await api.DelegateChangesBetween(start, end);
+            var invaders = await api.TaggedInvader();
+            var defenders = await api.TaggedDefender();
 
-            List<string> newDelegates = new List<string>();
-            List<int> timestamps = new List<int>();
-            List<string> newRegions = new List<string>();
-            foreach (var change in changes)
-            {
-                newDelegates.Add(RegexUtil.Find(change, "@@(.*?)@@"));
-                timestamps.Add(int.Parse(RegexUtil.Find(change, "<TIMESTAMP>(.*?)</TIMESTAMP>")));
-                newRegions.Add(RegexUtil.Find(change, "%%(.*?)%%"));
-            }
-            
-            List<string> invaded = new List<string>();
-            List<string> defended = new List<string>();
-            List<string> suspicious = new List<string>();
-            for (int i = 0; i < newDelegates.Count; i++)
-            {
-                var del = newDelegates[i];
-                var delMoves = await GetDelegateMoves(del, end - 86400);
-                
-                if (delMoves.Count > 0)
-                {
-                    var moveBeforeBecomingWaD = GetMoveBeforeBecomingDelegate(delMoves, timestamps[i]);
-                    if (moveBeforeBecomingWaD == null) continue;
-                    
-                    var region = TextUtil.ToTitleCase(newRegions[i].Replace("_", " "));
-                    var link = $"https://www.nationstates.net/region={newRegions[i]}";
-                    if (invaders.Any(x => x.ToLower().Replace(" ", "_") == moveBeforeBecomingWaD))
-                    {
-                        invaded.Add($"Possible raider activity in {region}. \n{link}");
-                    }
-                    else
-                    {
-                        var movedFrom = RegexUtil.Find(moveBeforeBecomingWaD, "%%(.*?)%%");
-                        if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                        {
-                            defended.Add($"Likely defence operation in {region}. \n{link}");
-                        }
-                        else
-                        {
-                            suspicious.Add($"Suspicious delegacy change in {region}. \n{link}");
-                        }
-                    }
-                }
-            }
+            var delegacyChanges = DelegacyChanges(changes);
 
-            UIConsole.Show(Report(invaded, suspicious, defended));
+            var ops = await FilterOps(delegacyChanges, end - 86400, invaders, defenders);
+
+            UIConsole.Show(Report(ops));
         }
 
         private double GetStart()
         {
-            if (0 <= TimeUtil.HourNow() && TimeUtil.HourNow() <= 2) return TimeUtil.PosixToday() + 18000 - 86400;
-            else if (2 < TimeUtil.HourNow() && TimeUtil.HourNow() <= 14) return TimeUtil.PosixToday() + 18000;
-            return TimeUtil.PosixToday() + 61200;
+            if (TimeUtil.Today().AddHours(3) < TimeUtil.Now() && TimeUtil.Now() < TimeUtil.Today().AddHours(14))
+            {
+                return TimeUtil.PosixLastMajorStart();
+            }
+
+            return TimeUtil.PosixLastMinorStart();
         }
 
         private async Task<List<string>> GetDelegateMoves(string del, double since)
@@ -83,10 +61,10 @@ namespace Console.Commands
             {
                 var api = Shared.Api;
                 var url = $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{del};filter=move;sincetime={since}";
-                var response = await api.GetAsync(url);
+                var response = await api.Request(url);
                 return RegexUtil.FindAll(response, "<EVENT(.*?)</EVENT>");
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
                 return new List<string>();
             }
@@ -106,27 +84,95 @@ namespace Console.Commands
             return null;
         }
 
-        private string Report(List<string> invaded, List<string> suspicious, List<string> defended)
+        private static List<DelegacyChange> DelegacyChanges(List<string> changes)
+        {
+            var delegacyChanges = new List<DelegacyChange>();
+            foreach (var change in changes)
+            {
+                delegacyChanges.Add(new DelegacyChange
+                {
+                    region = RegexUtil.Find(change, "%%(.*?)%%"),
+                    newDelegate = RegexUtil.Find(change, "@@(.*?)@@"),
+                    changeTimeStamp = int.Parse(RegexUtil.Find(change, "<TIMESTAMP>(.*?)</TIMESTAMP>"))
+                });
+            }
+
+            return delegacyChanges;
+        }
+        
+        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since, List<string> invaders, List<string> defenders)
+        {
+            var ops = new Dictionary<string, OpType>();
+            for (int i = 0; i < delegacyChanges.Count; i++)
+            {
+                var delegateName = delegacyChanges[i].newDelegate;
+                var delMoves = await GetDelegateMoves(delegateName, since);
+
+                if (delMoves.Count > 0)
+                {
+                    var moveBeforeBecomingWaD = GetMoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
+                    if (moveBeforeBecomingWaD == null) continue;
+
+                    var region = TextUtil.ToTitleCase(delegacyChanges[i].region.Replace("_", " "));
+                    var link = $"https://www.nationstates.net/region={delegacyChanges[i].region}";
+                    if (invaders.Any(x => x.ToLower().Replace(" ", "_") == moveBeforeBecomingWaD))
+                    {
+                        ops[region] = OpType.Invasion;
+                    }
+                    else
+                    {
+                        var movedFrom = RegexUtil.Find(moveBeforeBecomingWaD, "%%(.*?)%%");
+                        if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
+                        {
+                            ops[region] = OpType.Defence;
+                        }
+                        else
+                        {
+                            ops[region] = OpType.Suspicious;
+                        }
+                    }
+                }
+            }
+
+            return ops;
+        }
+        
+        private string Report(Dictionary<string, OpType> ops)
         {
             string report = $"Report: {TimeUtil.Now()}\n";
-            if (invaded.Count > 0 || defended.Count > 0 || suspicious.Count > 0)
+            if (ops.Count > 0)
             {
+                var invaded = ops.Where(p => p.Value == OpType.Invasion).ToList();
                 if (invaded.Count > 0)
                 {
                     report += "# === Possible Raider Activity === \n";
-                    invaded.ForEach(i => report += $"* {i}\n");
+                    invaded.ForEach(p =>
+                    {
+                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
+                        report += $"* Possible raider activity in {p.Key} \n{link}\n";
+                    });
                 }
 
+                var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
                 if (suspicious.Count > 0)
                 {
                     report += "# === Suspicious Delegacy Changes === \n";
-                    suspicious.ForEach(i => report += $"* {i}\n");
+                    suspicious.ForEach(p =>
+                    {
+                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
+                        report += $"* Suspicious delegacy change in {p.Key} \n{link}\n";
+                    });
                 }
 
+                var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
                 if (defended.Count > 0)
                 {
                     report += "# === Likely Defence Operations === \n";
-                    defended.ForEach(i => report += $"* {i}\n");   
+                    defended.ForEach(p =>
+                    {
+                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
+                        report += $"* Likely defence operation in {p.Key} \n{link}\n";
+                    });
                 }
             }
             else

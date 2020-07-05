@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "i4g9pygTURd4HXn34WoiXY4U5SXXoBE2ZwD/jBgRPcYLy2YEc2S9XwgmwCRszsm8Du/xPQk0N6L1r4QOMcj9wg==",
+  "dgSpecHash": "9WnQ4ABUcICEnPhR/3tByIM6AhGlyLEOrPAobDFlUpMA4orOxNONm7Sj9XofinClQUwLCZnjykcK09iHM7j22w==",
   "success": true,
   "projectFilePath": "/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/Console.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/david/.nuget/packages/timezoneconverter/3.2.0/timezoneconverter.3.2.0.nupkg.sha512"
+  ],
   "logs": []
 }

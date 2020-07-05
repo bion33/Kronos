@@ -6,7 +6,7 @@ namespace Console.Commands
     {
         public async Task Run()
         {
-            
+            await Task.Delay(1);
         }
     }
 }
