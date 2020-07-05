@@ -13,12 +13,14 @@ namespace Console.Utilities
         {
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Tz);
         }
+        
+        public static double PosixNow() => EstToUtc(Now()).Subtract(Epoch()).TotalSeconds;
 
         public static DateTime Today() => Now().Date;
 
         public static double PosixToday() => EstToUtc(Today()).Subtract(Epoch()).TotalSeconds;
 
-        public static int HourNow() => Now().Hour;
+        public static double PosixYesterday() => EstToUtc(Today().AddDays(-1)).Subtract(Epoch()).TotalSeconds;
         
         public static double PosixLastMajorStart()
         {
@@ -50,9 +52,19 @@ namespace Console.Utilities
             return PosixLastMinorStart() + (2 * 3600);
         }
 
-        public static DateTime EstToUtc(DateTime dateTime)
+        public static DateTime EstToUtc(DateTime dateTime) => TimeZoneInfo.ConvertTimeToUtc(dateTime, Tz);
+
+        public static DateTime UtcToEst(DateTime dateTime) => TimeZoneInfo.ConvertTimeFromUtc(dateTime, Tz);
+
+        public static string ToUpdateOffset(double posix)
         {
-            return TimeZoneInfo.ConvertTimeToUtc(dateTime, Tz);
+            var dt = UtcToEst(Epoch().AddSeconds(posix));
+
+            var hours = (dt.Hour > 3) ? dt.Hour - 12 : dt.Hour;
+            var minutes = dt.Minute;
+            var seconds = dt.Second;
+
+            return $"{hours:00}:{minutes:00}:{seconds:00}";
         }
     }
 }

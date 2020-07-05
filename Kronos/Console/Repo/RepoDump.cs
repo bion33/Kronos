@@ -84,7 +84,8 @@ namespace Console.Repo
                     delegateAuthority = element.XPathSelectElement("DELEGATEAUTH").Value,
                     founderless = (await api.TaggedFounderless()).Contains(name),
                     password = (await api.TaggedPassword()).Contains(name),
-                    tagged = (await api.TaggedInvader()).Contains(name)
+                    tagged = (await api.TaggedInvader()).Contains(name),
+                    majorUpdateTime = int.Parse(element.XPathSelectElement("LASTUPDATE").Value)
                 });
             }
 

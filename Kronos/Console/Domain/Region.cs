@@ -13,8 +13,8 @@ namespace Console.Domain
         public bool password;
         public bool tagged;
         public double majorUpdateTime;
-        public double majorCumulativeUpdateTime;
+        public string readableMajorUpdateTime;
         public double minorUpdateTime;
-        public double minorCumulativeUpdateTime;
+        public string readableMinorUpdateTime;
     }
 }
