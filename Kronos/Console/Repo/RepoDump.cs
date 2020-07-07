@@ -44,6 +44,8 @@ namespace Console.Repo
 
         private async Task GetDumpAsync(string url)
         {
+            if (File.Exists(dumpGz) || File.Exists(dumpXml)) return;
+
             var request = (HttpWebRequest) WebRequest.Create(url);
             request.UserAgent = Shared.UserAgent;
             using var response = (HttpWebResponse) await request.GetResponseAsync();
@@ -54,6 +56,8 @@ namespace Console.Repo
 
         private async Task ExtractGz(string gzLocation, string outputLocation)
         {
+            if (File.Exists(dumpXml)) return;
+
             await using var inStream = new FileStream(gzLocation, FileMode.Open, FileAccess.Read);
             await using var zipStream = new GZipStream(inStream, CompressionMode.Decompress);
             await using var outStream = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
