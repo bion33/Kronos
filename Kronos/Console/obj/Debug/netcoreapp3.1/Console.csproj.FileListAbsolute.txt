@@ -13,3 +13,12 @@
 /home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.genruntimeconfig.cache
 /home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/TimeZoneConverter.dll
 /home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/obj/Debug/netcoreapp3.1/Console.csproj.CopyComplete
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/DocumentFormat.OpenXml.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/System.IO.Packaging.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/ClosedXML.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/ExcelNumberFormat.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/Microsoft.Win32.SystemEvents.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/System.Drawing.Common.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/runtimes/win/lib/netcoreapp2.0/Microsoft.Win32.SystemEvents.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/runtimes/unix/lib/netcoreapp2.0/System.Drawing.Common.dll
+/home/david/Keep/Code/Git/Kronos-NET/Kronos/Console/bin/Debug/netcoreapp3.1/runtimes/win/lib/netcoreapp2.0/System.Drawing.Common.dll

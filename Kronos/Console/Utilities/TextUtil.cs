@@ -6,7 +6,7 @@ namespace Console.Utilities
     {
         public static string ToTitleCase(string s)
         {
-            var textInfo = new CultureInfo("en-UK",false).TextInfo;
+            var textInfo = new CultureInfo("en-UK", false).TextInfo;
             return textInfo.ToTitleCase(s);
         }
     }

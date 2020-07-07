@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,30 +11,16 @@ namespace Console.Commands
 {
     public class Ops : ICommand
     {
-        private struct DelegacyChange
-        {
-            public string region;
-            public string newDelegate;
-            public int changeTimeStamp;
-        }
-        
-        private enum OpType
-        {
-            Defence,
-            Suspicious,
-            Invasion
-        }
-        
         public async Task Run()
         {
             UIConsole.Show("Compiling operations report... \n");
-            
-            var api = Shared.Api;
-            
-            var start = GetStart();
-            var end = start + (3 * 3600);
 
-            var changes = await api.DelegateChangesBetween(start, end);
+            var api = RepoApi.Api;
+
+            var start = GetStart();
+            var end = start + 3 * 3600;
+
+            var changes = await api.DelegateChangesFrom(start);
             var invaders = await api.TaggedInvader();
             var defenders = await api.TaggedDefender();
 
@@ -42,15 +28,16 @@ namespace Console.Commands
 
             var ops = await FilterOps(delegacyChanges, end - 86400, invaders, defenders);
 
-            UIConsole.Show(Report(ops));
+            var report = Report(ops);
+
+            File.WriteAllText($"Kronos-Ops_{TimeUtil.DateForPath()}.md", report);
+            UIConsole.Show("Done. \n");
         }
 
         private double GetStart()
         {
             if (TimeUtil.Today().AddHours(3) < TimeUtil.Now() && TimeUtil.Now() < TimeUtil.Today().AddHours(14))
-            {
                 return TimeUtil.PosixLastMajorStart();
-            }
 
             return TimeUtil.PosixLastMinorStart();
         }
@@ -59,8 +46,9 @@ namespace Console.Commands
         {
             try
             {
-                var api = Shared.Api;
-                var url = $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{del};filter=move;sincetime={since}";
+                var api = RepoApi.Api;
+                var url =
+                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{del};filter=move;sincetime={since}";
                 var response = await api.Request(url);
                 return RegexUtil.FindAll(response, "<EVENT(.*?)</EVENT>");
             }
@@ -75,10 +63,7 @@ namespace Console.Commands
             foreach (var move in delegateMoves)
             {
                 var timestamp = int.Parse(RegexUtil.Find(move, "<TIMESTAMP>(.*?)</TIMESTAMP>"));
-                if (timestamp < becameDelegateTime)
-                {
-                    return RegexUtil.Find(move, "<TEXT>(.*?)</TEXT>");
-                }
+                if (timestamp < becameDelegateTime) return RegexUtil.Find(move, "<TEXT>(.*?)</TEXT>");
             }
 
             return null;
@@ -88,29 +73,29 @@ namespace Console.Commands
         {
             var delegacyChanges = new List<DelegacyChange>();
             foreach (var change in changes)
-            {
                 delegacyChanges.Add(new DelegacyChange
                 {
                     region = RegexUtil.Find(change, "%%(.*?)%%"),
                     newDelegate = RegexUtil.Find(change, "@@(.*?)@@"),
                     changeTimeStamp = int.Parse(RegexUtil.Find(change, "<TIMESTAMP>(.*?)</TIMESTAMP>"))
                 });
-            }
 
             return delegacyChanges;
         }
-        
-        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since, List<string> invaders, List<string> defenders)
+
+        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
+            List<string> invaders, List<string> defenders)
         {
             var ops = new Dictionary<string, OpType>();
-            for (int i = 0; i < delegacyChanges.Count; i++)
+            for (var i = 0; i < delegacyChanges.Count; i++)
             {
                 var delegateName = delegacyChanges[i].newDelegate;
                 var delMoves = await GetDelegateMoves(delegateName, since);
 
                 if (delMoves.Count > 0)
                 {
-                    var moveBeforeBecomingWaD = GetMoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
+                    var moveBeforeBecomingWaD =
+                        GetMoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
                     if (moveBeforeBecomingWaD == null) continue;
 
                     var region = TextUtil.ToTitleCase(delegacyChanges[i].region.Replace("_", " "));
@@ -123,29 +108,25 @@ namespace Console.Commands
                     {
                         var movedFrom = RegexUtil.Find(moveBeforeBecomingWaD, "%%(.*?)%%");
                         if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                        {
                             ops[region] = OpType.Defence;
-                        }
                         else
-                        {
                             ops[region] = OpType.Suspicious;
-                        }
                     }
                 }
             }
 
             return ops;
         }
-        
+
         private string Report(Dictionary<string, OpType> ops)
         {
-            string report = $"Report: {TimeUtil.Now()}\n";
+            var report = $"Report: {TimeUtil.Now()}\n";
             if (ops.Count > 0)
             {
                 var invaded = ops.Where(p => p.Value == OpType.Invasion).ToList();
                 if (invaded.Count > 0)
                 {
-                    report += "# === Possible Raider Activity === \n";
+                    report += $"# === {invaded.Count} Possible Raider Activity === \n";
                     invaded.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
@@ -156,7 +137,7 @@ namespace Console.Commands
                 var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
                 if (suspicious.Count > 0)
                 {
-                    report += "# === Suspicious Delegacy Changes === \n";
+                    report += $"# === {suspicious.Count} Suspicious Delegacy Changes === \n";
                     suspicious.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
@@ -167,7 +148,7 @@ namespace Console.Commands
                 var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
                 if (defended.Count > 0)
                 {
-                    report += "# === Likely Defence Operations === \n";
+                    report += $"# === {defended.Count} Likely Defence Operations === \n";
                     defended.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
@@ -177,10 +158,24 @@ namespace Console.Commands
             }
             else
             {
-                report += $"# === No suspicious activity found ===\n";
+                report += "# === No suspicious activity found ===\n";
             }
-            
+
             return report;
-        } 
+        }
+
+        private struct DelegacyChange
+        {
+            public string region;
+            public string newDelegate;
+            public int changeTimeStamp;
+        }
+
+        private enum OpType
+        {
+            Defence,
+            Suspicious,
+            Invasion
+        }
     }
 }

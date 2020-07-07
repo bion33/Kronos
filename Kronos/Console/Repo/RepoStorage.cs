@@ -10,20 +10,18 @@ namespace Console.Repo
 
         public static string GetUserInfo()
         {
-            if (! File.Exists(ConfigPath)) File.Create(ConfigPath);
+            if (!File.Exists(ConfigPath)) File.Create(ConfigPath);
 
             var config = File.ReadAllText(ConfigPath);
             var configLines = config.Split("\n");
-            
-            string userInfo = "";
+
+            var userInfo = "";
             foreach (var line in configLines)
-            {
                 if (line.Contains(UserInfo))
                 {
                     userInfo = line.Replace($"{UserInfo}: ", "");
                     break;
                 }
-            }
 
             if (userInfo.Length > 0) return userInfo;
 

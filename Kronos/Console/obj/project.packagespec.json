@@ -26,6 +26,10 @@
   "frameworks": {
     "netcoreapp3.1": {
       "dependencies": {
+        "ClosedXML": {
+          "target": "Package",
+          "version": "[0.95.3, )"
+        },
         "TimeZoneConverter": {
           "target": "Package",
           "version": "[3.2.0, )"

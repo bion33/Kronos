@@ -1,20 +1,18 @@
-using Console.Repo;
-
 namespace Console.Domain
 {
     public class Region
     {
-        public string name;
-        public string url;
-        public int nationCount;
-        public int delegateVotes;
         public string delegateAuthority;
+        public int delegateVotes;
         public bool founderless;
-        public bool password;
-        public bool tagged;
         public double majorUpdateTime;
-        public string readableMajorUpdateTime;
         public double minorUpdateTime;
+        public string name;
+        public int nationCount;
+        public bool password;
+        public string readableMajorUpdateTime;
         public string readableMinorUpdateTime;
+        public bool tagged;
+        public string url;
     }
 }
