@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -19,12 +20,12 @@ namespace Console.Repo
         private readonly string dumpXml = $".Regions_{TimeUtil.DateForPath()}.xml";
 
         private List<Region> regions;
+        private int numNations = 0;
 
         private RepoDump()
         {
         }
 
-        public int NumNations { get; private set; }
         public static RepoDump Dump => dump ??= new RepoDump();
 
         private async Task EnsureDumpReady()
@@ -83,18 +84,20 @@ namespace Console.Repo
             var api = RepoApi.Api;
             regions = new List<Region>();
             var regionsXml = XElement.Load(dumpXml).Elements("REGION");
+            numNations = 0;
 
             foreach (var element in regionsXml)
             {
                 var name = element.XPathSelectElement("NAME").Value;
                 var nations = int.Parse(element.XPathSelectElement("NUMNATIONS").Value);
-                NumNations += nations;
+                numNations += nations;
 
                 regions.Add(new Region
                 {
                     name = name,
                     url = $"https://www.nationstates.net/region={name.ToLower().Replace(" ", "_")}",
                     nationCount = nations,
+                    nationCumulative = numNations,
                     delegateVotes = int.Parse(element.XPathSelectElement("DELEGATEVOTES").Value),
                     delegateAuthority = element.XPathSelectElement("DELEGATEAUTH").Value,
                     founderless = (await api.TaggedFounderless()).Contains(name),
@@ -104,7 +107,70 @@ namespace Console.Repo
                 });
             }
 
+            await AddMinorUpdateTimes();
+            AddReadableUpdateTimes();
+            
             return regions;
+        }
+
+        private async Task AddMinorUpdateTimes()
+        {
+            var minorDuration = await RepoApi.Api.EndOfMinor() - TimeUtil.PosixLastMinorStart();
+            var minorTick = minorDuration / numNations;
+            
+            for (var i = 0; i < regions.Count; i++)
+                regions[i].minorUpdateTime = i == 0
+                    ? regions[i].nationCount * minorTick + TimeUtil.PosixLastMinorStart()
+                    : regions[i - 1].minorUpdateTime + regions[i].nationCount * minorTick;
+        }
+
+        private void AddReadableUpdateTimes()
+        {
+            for (var i = 0; i < regions.Count; i++)
+            {
+                regions[i].readableMajorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].majorUpdateTime);
+                regions[i].readableMinorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].minorUpdateTime);
+            }
+        }
+        
+        public async Task<double> MajorTook()
+        {
+            await EnsureDumpReady();
+            await Regions();
+
+            return regions.Last().majorUpdateTime - regions.First().majorUpdateTime;
+        }
+        
+        public async Task<double> MinorTook()
+        {
+            await EnsureDumpReady();
+            await Regions();
+
+            return regions.Last().minorUpdateTime - regions.First().minorUpdateTime;
+        }
+
+        public async Task<double> MajorTick()
+        {
+            await EnsureDumpReady();
+            await Regions();
+
+            return await MajorTook() / (await NumNations() + 0.0);
+        }
+
+        public async Task<double> MinorTick()
+        {
+            await EnsureDumpReady();
+            await Regions();
+
+            return await MinorTook() / (await NumNations() + 0.0);
+        }
+
+        public async Task<int> NumNations()
+        {
+            await EnsureDumpReady();
+            await Regions();
+
+            return numNations;
         }
     }
 }

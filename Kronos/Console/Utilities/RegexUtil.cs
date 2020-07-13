@@ -6,14 +6,14 @@ namespace Console.Utilities
 {
     public static class RegexUtil
     {
-        public static string Find(string source, string pattern)
+        public static string Find(this string source, string pattern)
         {
             var regex = new Regex(pattern);
             var matches = regex.Match(source);
             return matches.Groups[1].Value;
         }
 
-        public static List<string> FindAll(string source, string pattern)
+        public static List<string> FindAll(this string source, string pattern)
         {
             source = source.Replace("\n", "");
             var regex = new Regex(pattern);

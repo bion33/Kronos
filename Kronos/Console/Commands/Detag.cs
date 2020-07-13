@@ -15,9 +15,9 @@ namespace Console.Commands
         {
             UIConsole.Show("Creating Detag sheet... \n");
 
-            var regions = await Kronos.Regions();
+            var regions = await RepoDump.Dump.Regions();
             regions = Filter(regions);
-            Sheet(regions);
+            await Sheet(regions);
 
             UIConsole.Show("Done. \n");
         }
@@ -28,7 +28,7 @@ namespace Console.Commands
                 .ToList();
         }
 
-        private void Sheet(List<Region> regions)
+        private async Task Sheet(List<Region> regions)
         {
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("TimeSheet");
@@ -37,9 +37,9 @@ namespace Console.Commands
                 {"Region", "Major", "Minor", "Nations", "Endo's", "Founder", "Link", "", "World", "Data"};
             ws.AddRow(1, row);
 
-            var majorTime = regions.Last().majorUpdateTime - regions.First().majorUpdateTime;
-            var minorTime = regions.Last().minorUpdateTime - regions.First().minorUpdateTime;
-            var nations = RepoDump.Dump.NumNations;
+            var majorTime = await RepoDump.Dump.MajorTook();
+            var minorTime = await RepoDump.Dump.MinorTook();
+            var nations = await RepoDump.Dump.NumNations();
 
             ws.AddWorldData(2, 9, nations, (int) majorTime, (int) minorTime);
 
@@ -48,7 +48,7 @@ namespace Console.Commands
                 var region = regions[i - 2];
                 row = new List<object>
                 {
-                    region.name,
+                    "'" + region.name,
                     "'" + region.readableMajorUpdateTime,
                     "'" + region.readableMinorUpdateTime,
                     region.nationCount,
@@ -58,7 +58,7 @@ namespace Console.Commands
                 ws.AddRow(i, row);
                 ws.Cell($"G{i}").SetValue(region.url).Hyperlink = new XLHyperlink(region.url);
             }
-
+            
             ws.Range("A1:G1").Style.Fill.BackgroundColor = XLColor.Gray;
             ws.Range("I1:J1").Style.Fill.BackgroundColor = XLColor.Gray;
             ws.Row(1).Style.Font.Bold = true;

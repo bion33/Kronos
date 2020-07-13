@@ -54,7 +54,7 @@ namespace Console.Repo
                 var url =
                     $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;filter=member;sincetime={start};beforetime={start + i * 900};limit=200";
                 var response = await Request(url);
-                var found = RegexUtil.FindAll(response, "<EVENT id=\"[0-9]*\">(.*?)</EVENT>");
+                var found = response.FindAll("<EVENT id=\"[0-9]*\">(.*?)</EVENT>");
                 foreach (var happening in found)
                     if (!waHappenings.Contains(happening) && happening.Contains("WA Delegate"))
                     {
@@ -73,7 +73,7 @@ namespace Console.Repo
             var url = $"https://www.nationstates.net/cgi-bin/api.cgi?q=regionsbytag;tags={tag}";
             var response = await Request(url);
             response = response.Replace("\n", "");
-            var found = RegexUtil.Find(response, "<REGIONS>(.*?)</REGIONS>");
+            var found = response.Find("<REGIONS>(.*?)</REGIONS>");
             found = found.Replace("['", "").Replace("']", "");
             var tagged = found.Split(",").ToList();
             return tagged;
@@ -118,7 +118,7 @@ namespace Console.Repo
 
             var url = "https://www.nationstates.net/cgi-bin/api.cgi?q=numnations";
             var response = await Request(url);
-            numNations = int.Parse(RegexUtil.Find(response, "<NUMNATIONS>(.*?)</NUMNATIONS>"));
+            numNations = int.Parse(response.Find("<NUMNATIONS>(.*?)</NUMNATIONS>"));
             return numNations;
         }
 
@@ -139,12 +139,20 @@ namespace Console.Repo
                 foreach (var change in influenceChanges)
                     if (change.Contains("influence"))
                     {
-                        lastInfluenceChange = int.Parse(RegexUtil.Find(change, "<TIMESTAMP>(.*)</TIMESTAMP>"));
+                        lastInfluenceChange = int.Parse(change.Find("<TIMESTAMP>(.*)</TIMESTAMP>"));
                         break;
                     }
             }
 
             return lastInfluenceChange;
+        }
+
+        public async Task<int> LastUpdateFor(string region)
+        {
+            region = region.ToLower().Replace(" ", "_");
+            var url = $"https://www.nationstates.net/cgi-bin/api.cgi?region={region}&q=lastupdate";
+            var response = await Request(url);
+            return int.Parse(response.Find("<LASTUPDATE>(.*)</LASTUPDATE>"));
         }
     }
 }

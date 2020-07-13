@@ -9,6 +9,7 @@ namespace Console.Domain
         public double minorUpdateTime;
         public string name;
         public int nationCount;
+        public int nationCumulative;
         public bool password;
         public string readableMajorUpdateTime;
         public string readableMinorUpdateTime;

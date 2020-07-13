@@ -50,7 +50,7 @@ namespace Console.Commands
                 var url =
                     $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{del};filter=move;sincetime={since}";
                 var response = await api.Request(url);
-                return RegexUtil.FindAll(response, "<EVENT(.*?)</EVENT>");
+                return response.FindAll("<EVENT(.*?)</EVENT>");
             }
             catch (HttpRequestException)
             {
@@ -62,8 +62,8 @@ namespace Console.Commands
         {
             foreach (var move in delegateMoves)
             {
-                var timestamp = int.Parse(RegexUtil.Find(move, "<TIMESTAMP>(.*?)</TIMESTAMP>"));
-                if (timestamp < becameDelegateTime) return RegexUtil.Find(move, "<TEXT>(.*?)</TEXT>");
+                var timestamp = int.Parse(move.Find( "<TIMESTAMP>(.*?)</TIMESTAMP>"));
+                if (timestamp < becameDelegateTime) return move.Find( "<TEXT>(.*?)</TEXT>");
             }
 
             return null;
@@ -75,9 +75,9 @@ namespace Console.Commands
             foreach (var change in changes)
                 delegacyChanges.Add(new DelegacyChange
                 {
-                    region = RegexUtil.Find(change, "%%(.*?)%%"),
-                    newDelegate = RegexUtil.Find(change, "@@(.*?)@@"),
-                    changeTimeStamp = int.Parse(RegexUtil.Find(change, "<TIMESTAMP>(.*?)</TIMESTAMP>"))
+                    region = change.Find("%%(.*?)%%"),
+                    newDelegate = change.Find("@@(.*?)@@"),
+                    changeTimeStamp = int.Parse(change.Find("<TIMESTAMP>(.*?)</TIMESTAMP>"))
                 });
 
             return delegacyChanges;
@@ -106,7 +106,7 @@ namespace Console.Commands
                     }
                     else
                     {
-                        var movedFrom = RegexUtil.Find(moveBeforeBecomingWaD, "%%(.*?)%%");
+                        var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
                         if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
                             ops[region] = OpType.Defence;
                         else

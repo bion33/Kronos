@@ -48,6 +48,13 @@ namespace Console.Utilities
 
             return EstToUtc(Today().AddDays(-1)).Subtract(Epoch()).TotalSeconds;
         }
+        
+        public static double PosixThisMajorStart()
+        {
+            if (Today().AddHours(3) < Now()) return EstToUtc(Today().AddDays(1)).Subtract(Epoch()).TotalSeconds;
+
+            return EstToUtc(Today()).Subtract(Epoch()).TotalSeconds;
+        }
 
         public static double PosixLastMajorEnd()
         {
@@ -59,6 +66,13 @@ namespace Console.Utilities
             if (Today().AddHours(14) < Now()) return EstToUtc(Today().AddHours(12)).Subtract(Epoch()).TotalSeconds;
 
             return EstToUtc(Today().AddDays(-1).AddHours(12)).Subtract(Epoch()).TotalSeconds;
+        }
+        
+        public static double PosixThisMinorStart()
+        {
+            if (Today().AddHours(14) < Now()) return EstToUtc(Today().AddDays(1).AddHours(12)).Subtract(Epoch()).TotalSeconds;
+
+            return EstToUtc(Today().AddHours(12)).Subtract(Epoch()).TotalSeconds;
         }
 
         public static double PosixLastMinorEnd()
@@ -83,6 +97,17 @@ namespace Console.Utilities
             var hours = dt.Hour > 3 ? dt.Hour - 12 : dt.Hour;
             var minutes = dt.Minute;
             var seconds = dt.Second;
+
+            return $"{hours:00}:{minutes:00}:{seconds:00}";
+        }
+
+        public static string ToHms(double seconds)
+        {
+            var hours = (int) (seconds / 3600);
+            seconds -= hours * 3600;
+            var minutes = (int) (seconds / 60);
+            seconds -= minutes * 60;
+            seconds = (int) seconds;
 
             return $"{hours:00}:{minutes:00}:{seconds:00}";
         }
