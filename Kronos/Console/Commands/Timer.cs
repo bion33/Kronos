@@ -51,20 +51,11 @@ namespace Console.Commands
             
             while (keepGoing)
             {
-                if (await RegionUpdated(target))  await Task.Delay(500);
-                else
-                {
-                    for (int i = 0; i < triggers.Count && keepGoing; i++)
-                    {
-                        currentTrigger = triggers[i];
-                        while (! await RegionUpdated(currentTrigger)) await Task.Delay(500);
-                        var newUpdate = await RepoApi.Api.LastUpdateFor(currentTrigger.name);
-                        var updateStart = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixLastMinorStart();
-                        var newSecondsPerNation = (newUpdate - updateStart) / currentTrigger.nationCumulative;
-                        secondsPerNation.Add(newSecondsPerNation);
-                    }
-                }   
+                if (! await Updated(target)) await Watch(triggers);
+                
+                // else average seconds/nation from sheet times is used
             }
+            
             UIConsole.Show("\nDone.\n");
         }
 
@@ -81,7 +72,7 @@ namespace Console.Commands
             return triggers;
         }
 
-        private async Task<bool> RegionUpdated(Region region)
+        private async Task<bool> Updated(Region region)
         {
             var lastUpdate = await RepoApi.Api.LastUpdateFor(region.name);
             
@@ -104,6 +95,19 @@ namespace Console.Commands
                 UIConsole.Show($"\r{TimeUtil.ToHms(timeToUpdate)}");
                 keepGoing = ! UIConsole.Interrupted();
                 await Task.Delay(500);
+            }
+        }
+
+        private async Task Watch(List<Region> triggers)
+        {
+            for (int i = 0; i < triggers.Count && keepGoing; i++)
+            {
+                currentTrigger = triggers[i];
+                while (! await Updated(currentTrigger)) await Task.Delay(500);
+                var newUpdate = await RepoApi.Api.LastUpdateFor(currentTrigger.name);
+                var updateStart = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixLastMinorStart();
+                var newSecondsPerNation = (newUpdate - updateStart) / currentTrigger.nationCumulative;
+                secondsPerNation.Add(newSecondsPerNation);
             }
         }
     }
