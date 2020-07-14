@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,10 +11,10 @@ namespace Console.Commands
     public class Timer : ICommand
     {
         private const int MaxSecondsDeviation = 10;
-        private static double secondsPerNation;
-        private static double variance;
-        private static bool usingSheet;
-        private static bool largeRegionAhead;
+        private bool nextUpdateIsMajor;
+        private Region currentTrigger;
+        private List<double> secondsPerNation;
+        private bool keepGoing = true;
 
         public async Task Run()
         {
@@ -25,7 +24,7 @@ namespace Console.Commands
 
             while (index < 0)
             {
-                UIConsole.Show("Provide no region below to exit. \n\nTarget Region: ");
+                UIConsole.Show("Provide no region below to quit Timer. \n\nTarget Region: ");
                 var t = UIConsole.GetInput();
             
                 if (t == "") return;
@@ -34,32 +33,39 @@ namespace Console.Commands
             }
 
             var target = regions[index];
-            var major = TimeUtil.PosixLastMajorStart() < TimeUtil.PosixLastMinorStart();
-            var lastUpdateTook = (major) ? await RepoDump.Dump.MajorTook() : await RepoDump.Dump.MinorTook();
+            nextUpdateIsMajor = TimeUtil.PosixLastMajorStart() < TimeUtil.PosixLastMinorStart();
+            var lastUpdateTook = (nextUpdateIsMajor) ? await RepoDump.Dump.MajorTook() : await RepoDump.Dump.MinorTook();
             var interval = (int) (MaxSecondsDeviation * await RepoDump.Dump.NumNations() / (lastUpdateTook + 0.0));
 
             var triggers = Triggers(index, regions, interval);
 
-            var thisUpdateStart = (major) ? TimeUtil.PosixThisMajorStart() : TimeUtil.PosixThisMinorStart();
-            UpdateSecondsPerNation(major, triggers, interval, thisUpdateStart);
+            UIConsole.Show("Press [Q] to quit Timer.\nTime\n----\n");
 
-            UIConsole.Show($"{"Time".PadRight(9, ' ')}|{" Variance".PadRight(12, ' ')}|{" Status".PadRight(25, ' ')}\n{"".PadRight(8, '-')} {"".PadRight(12, '-')} {"".PadRight(25, '-')}\n");
-
-            while (true)
+            secondsPerNation = new List<double>
             {
-                await Task.Delay(1000);
-                
-                var timeToUpdate = (target.nationCumulative * secondsPerNation) + thisUpdateStart - TimeUtil.PosixNow();    // There's an issue here, it's 12 minutes off when on sheet time for The West Pacific.
-                var strTimeToUpdate = TimeUtil.ToHms(timeToUpdate).PadRight(9, ' ');
-                
-                var varies = variance.ToString().PadRight(11, ' ');
-                
-                var statusMessage = (usingSheet) ? "Using sheet time." : (largeRegionAhead) ? "<!> Large region ahead." : "";
-                statusMessage = statusMessage.PadRight(24, ' ');
-                
-                
-                UIConsole.Show($"\r{strTimeToUpdate}| {varies}| {statusMessage}");
+                (nextUpdateIsMajor) ? await RepoDump.Dump.MajorTick() : await RepoDump.Dump.MinorTick()
+            };
+
+            currentTrigger = target;
+            ShowUpdateTimer();
+            
+            while (keepGoing)
+            {
+                if (await RegionUpdated(target))  await Task.Delay(500);
+                else
+                {
+                    for (int i = 0; i < triggers.Count && keepGoing; i++)
+                    {
+                        currentTrigger = triggers[i];
+                        while (! await RegionUpdated(currentTrigger)) await Task.Delay(500);
+                        var newUpdate = await RepoApi.Api.LastUpdateFor(currentTrigger.name);
+                        var updateStart = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixLastMinorStart();
+                        var newSecondsPerNation = (newUpdate - updateStart) / currentTrigger.nationCumulative;
+                        secondsPerNation.Add(newSecondsPerNation);
+                    }
+                }   
             }
+            UIConsole.Show("\nDone.\n");
         }
 
         private static List<Region> Triggers(int index, List<Region> regions, int interval)
@@ -75,39 +81,29 @@ namespace Console.Commands
             return triggers;
         }
 
-        private async Task UpdateSecondsPerNation(bool major, List<Region> triggers, int interval, double thisUpdateStart)
+        private async Task<bool> RegionUpdated(Region region)
         {
-            var keepCheckingTriggers = true;
+            var lastUpdate = await RepoApi.Api.LastUpdateFor(region.name);
+            
+            if (nextUpdateIsMajor) return lastUpdate > region.majorUpdateTime;
+            return lastUpdate > region.minorUpdateTime;
+        }
 
-            while (keepCheckingTriggers)
+        private double NextUpdateFor(Region region, double averageSecondsPerNation)
+        {
+            var nextUpdate = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixNextMinorStart();
+            return nextUpdate + (averageSecondsPerNation * region.nationCumulative);
+        }
+
+        private async Task ShowUpdateTimer()
+        {
+            while (keepGoing)
             {
-                if (thisUpdateStart > TimeUtil.PosixNow())
-                {
-                    usingSheet = true;
-                    secondsPerNation = (major) ? await RepoDump.Dump.MajorTick() : await RepoDump.Dump.MinorTick();
-                    await Task.Delay(1000);
-                }
-                else
-                {
-                    usingSheet = false;
-                    for (int i = 0; i < triggers.Count; i++)
-                    {
-                        var trigger = triggers[i];
-                        largeRegionAhead = (trigger.nationCumulative - triggers[i - 1].nationCumulative) > interval * 2;
-                        var lastTriggerUpdate = (major) ? trigger.majorUpdateTime : trigger.minorUpdateTime;
-                        var waitForTriggerUpdate = true;
-                        var thisTriggerUpdate = 0.0;
-                        while (waitForTriggerUpdate)
-                        {
-                            thisTriggerUpdate = await RepoApi.Api.LastUpdateFor(trigger.name) - TimeUtil.PosixToday();
-                            waitForTriggerUpdate = (int) thisTriggerUpdate == (int) lastTriggerUpdate;
-                        }
-                        secondsPerNation = (thisTriggerUpdate - thisUpdateStart) / trigger.nationCumulative;
-                        variance = lastTriggerUpdate - thisTriggerUpdate;
-                    }
-
-                    keepCheckingTriggers = false;
-                }
+                var average = secondsPerNation.Sum() / (secondsPerNation.Count + 0.0);
+                var timeToUpdate = NextUpdateFor(currentTrigger, average) - TimeUtil.PosixNow();
+                UIConsole.Show($"\r{TimeUtil.ToHms(timeToUpdate)}");
+                keepGoing = ! UIConsole.Interrupted();
+                await Task.Delay(500);
             }
         }
     }

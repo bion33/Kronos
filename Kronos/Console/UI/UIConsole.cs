@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Console.Commands;
@@ -8,16 +9,18 @@ namespace Console.UI
     {
         private const string HelpText = "\nKronos Quick Help\n" +
                                         "\n" +
-                                        "    Syntax: Kronos [-d] [-k] [-o] [-t]\n" +
+                                        "    Syntax: Kronos [-d] [-k] [-o] [-q] [-t]\n" +
                                         "\n" +
                                         "Options:\n" +
                                         "  -d, -detag:   an update sheet limited to detag-able regions.\n" +
                                         "  -k, -kronos:  the full update times sheet.\n" +
                                         "  -o, -ops:     likely military operations from the last update.\n" +
+                                        "  -q, -quit:    exit Kronos.\n" +
                                         "  -t, -timer:   time to when a region updates. Implies [-k].\n" +
                                         "\n" +
                                         "See \"Purpose & Use\" in the README for more information.\n" +
-                                        "Use -q or -quit to quit.\n" +
+                                        "The order of the parameters determines the order of execution.\n" +
+                                        "Use -q as the last parameter if you want Kronos to automatically quit.\n" +
                                         "\n";
 
         public static List<ICommand> GetCommands(string[] initialArgs)
@@ -33,7 +36,9 @@ namespace Console.UI
                     switch (arg.ToLower())
                     {
                         case "-q":
-                        case "-quit": break;
+                        case "-quit": 
+                            commands.Add(new Quit());
+                            break;
                         case "-d":
                         case "-detag":
                             commands.Add(new Detag());
@@ -83,6 +88,11 @@ namespace Console.UI
         public static string GetInput()
         {
             return System.Console.ReadLine();
+        }
+
+        public static bool Interrupted()
+        {
+            return System.Console.KeyAvailable && System.Console.ReadKey(true).Key == ConsoleKey.Q;
         }
     }
 }

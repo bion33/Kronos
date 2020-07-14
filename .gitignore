@@ -1,3 +1,5 @@
 # Specify filepatterns you want git to ignore.
 
 .idea
+Kronos/Console/obj
+Kronos/Console/bin

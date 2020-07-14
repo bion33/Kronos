@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace Console.Repo
         private List<string> taggedFounderless;
         private List<string> taggedInvader;
         private List<string> taggedPassword;
+        private DateTime lastRequest = DateTime.Now;
 
         private RepoApi()
         {
@@ -26,17 +28,19 @@ namespace Console.Repo
         public async Task<string> Request(string url)
         {
             queue.Enqueue(url);
-            await Task.Delay(1000);
-            while (queue.Peek() != url) await Task.Delay(1000);
+            while (queue.Peek() != url || lastRequest > DateTime.Now.AddSeconds(-1)) await Task.Delay(1000 - (int) (DateTime.Now - lastRequest).TotalMilliseconds);
 
             var request = (HttpWebRequest) WebRequest.Create(url);
             request.UserAgent = Shared.UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             using var response = (HttpWebResponse) await request.GetResponseAsync();
+            
+            queue.Dequeue();
+            lastRequest = DateTime.Now;
+            // System.Console.WriteLine($"Request @ {DateTime.Now}: {response.StatusCode}");
+
             await using var stream = response.GetResponseStream();
             using var reader = new StreamReader(stream);
-
-            queue.Dequeue();
             return await reader.ReadToEndAsync();
         }
 

@@ -49,7 +49,7 @@ namespace Console.Utilities
             return EstToUtc(Today().AddDays(-1)).Subtract(Epoch()).TotalSeconds;
         }
         
-        public static double PosixThisMajorStart()
+        public static double PosixNextMajorStart()
         {
             if (Today().AddHours(3) < Now()) return EstToUtc(Today().AddDays(1)).Subtract(Epoch()).TotalSeconds;
 
@@ -68,7 +68,7 @@ namespace Console.Utilities
             return EstToUtc(Today().AddDays(-1).AddHours(12)).Subtract(Epoch()).TotalSeconds;
         }
         
-        public static double PosixThisMinorStart()
+        public static double PosixNextMinorStart()
         {
             if (Today().AddHours(14) < Now()) return EstToUtc(Today().AddDays(1).AddHours(12)).Subtract(Epoch()).TotalSeconds;
 

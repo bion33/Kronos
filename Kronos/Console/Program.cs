@@ -10,10 +10,11 @@ namespace Console
             UIConsole.Show("Kronos, at your service.\n");
             UIConsole.Show("Starting...\n");
 
-            var commands = UIConsole.GetCommands(args);
-            foreach (var command in commands) await command.Run();
-
-            UIConsole.Show("Goodbye!\n");
+            while (true)
+            {
+                var commands = UIConsole.GetCommands(args);
+                foreach (var command in commands) await command.Run();   
+            }
         }
     }
 }
