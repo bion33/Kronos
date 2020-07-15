@@ -1,4 +1,7 @@
 using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Console.Repo;
 using TimeZoneConverter;
 
 namespace Console.Utilities
@@ -14,7 +17,7 @@ namespace Console.Utilities
 
         public static DateTime Now()
         {
-            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Tz);
+            return UtcToEst(DateTime.UtcNow);
         }
 
         public static double PosixNow()
@@ -103,13 +106,16 @@ namespace Console.Utilities
 
         public static string ToHms(double seconds)
         {
+            var sign = (seconds < 0) ? "-" : " ";
+            seconds = Math.Abs(seconds);
+            
             var hours = (int) (seconds / 3600);
             seconds -= hours * 3600;
             var minutes = (int) (seconds / 60);
             seconds -= minutes * 60;
             seconds = (int) seconds;
 
-            return $"{hours:00}:{minutes:00}:{seconds:00}";
+            return $"{sign}{hours:00}:{minutes:00}:{seconds:00}";
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Console.UI
                                         "\n" +
                                         "See \"Purpose & Use\" in the README for more information.\n" +
                                         "The order of the parameters determines the order of execution.\n" +
-                                        "Use -q as the last parameter if you want Kronos to automatically quit.\n" +
+                                        "Add -q as the last parameter if you want Kronos to automatically quit.\n" +
                                         "\n";
 
         public static List<ICommand> GetCommands(string[] initialArgs)

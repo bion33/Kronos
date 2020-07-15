@@ -10,9 +10,11 @@ namespace Console.Commands
 {
     public class Timer : ICommand
     {
-        private const int MaxSecondsDeviation = 10;
+        private const int LastTriggerSecondsBeforeTarget = 3;
         private bool nextUpdateIsMajor;
-        private Region currentTrigger;
+        private List<Region> triggers;
+        private int currentTrigger;
+        private Region target;
         private List<double> secondsPerNation;
         private bool keepGoing = true;
 
@@ -32,26 +34,28 @@ namespace Console.Commands
                 if (index == -1) UIConsole.Show("Region name not found.\n");   
             }
 
-            var target = regions[index];
+            target = regions[index];
             nextUpdateIsMajor = TimeUtil.PosixLastMajorStart() < TimeUtil.PosixLastMinorStart();
             var lastUpdateTook = (nextUpdateIsMajor) ? await RepoDump.Dump.MajorTook() : await RepoDump.Dump.MinorTook();
-            var interval = (int) (MaxSecondsDeviation * await RepoDump.Dump.NumNations() / (lastUpdateTook + 0.0));
+            var interval = (int) (LastTriggerSecondsBeforeTarget * await RepoDump.Dump.NumNations() / (lastUpdateTook + 0.0));
 
-            var triggers = Triggers(index, regions, interval);
+            triggers = Triggers(index, regions, interval);
 
-            UIConsole.Show("Press [Q] to quit Timer.\nTime\n----\n");
+            UIConsole.Show("Press [Q] to quit Timer.\n");
+            UIConsole.Show($"{" Time".PadRight(9, ' ')} | {"Trigger".PadRight(7, ' ')} | Variance \n");
+            UIConsole.Show($"{"".PadRight(10, '-')} {"".PadRight(9, '-')} {"".PadRight(12, '-')}\n");
 
             secondsPerNation = new List<double>
             {
                 (nextUpdateIsMajor) ? await RepoDump.Dump.MajorTick() : await RepoDump.Dump.MinorTick()
             };
 
-            currentTrigger = target;
+            currentTrigger = 1;
             ShowUpdateTimer();
             
             while (keepGoing)
             {
-                if (! await Updated(target)) await Watch(triggers);
+                if (! await Updated(target)) await WatchTriggers();
                 
                 // else average seconds/nation from sheet times is used
             }
@@ -62,10 +66,15 @@ namespace Console.Commands
         private static List<Region> Triggers(int index, List<Region> regions, int interval)
         {
             var triggers = new List<Region>();
+            double multiplier = 1;
             for (int i = index; i >= 0; i--)
             {
-                if (i == index || triggers.Last().nationCumulative - regions[i].nationCumulative > interval)
+                if (i == index || triggers.Last().nationCumulative - regions[i].nationCumulative >
+                    interval * multiplier)
+                {
                     triggers.Add(regions[i]);
+                    multiplier *= 1.5;
+                }
             }
 
             triggers.Reverse();
@@ -75,9 +84,10 @@ namespace Console.Commands
         private async Task<bool> Updated(Region region)
         {
             var lastUpdate = await RepoApi.Api.LastUpdateFor(region.name);
-            
-            if (nextUpdateIsMajor) return lastUpdate > region.majorUpdateTime;
-            return lastUpdate > region.minorUpdateTime;
+            var startOfThisUpdate =
+                (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixNextMinorStart();
+
+            return lastUpdate > startOfThisUpdate;
         }
 
         private double NextUpdateFor(Region region, double averageSecondsPerNation)
@@ -90,25 +100,38 @@ namespace Console.Commands
         {
             while (keepGoing)
             {
-                var average = secondsPerNation.Sum() / (secondsPerNation.Count + 0.0);
-                var timeToUpdate = NextUpdateFor(currentTrigger, average) - TimeUtil.PosixNow();
-                UIConsole.Show($"\r{TimeUtil.ToHms(timeToUpdate)}");
+                var average = secondsPerNation.Sum() / secondsPerNation.Count;
+                var current = secondsPerNation.Last();
+                var variance = current - average;
+                var timeToUpdate = NextUpdateFor(target, current) - TimeUtil.PosixNow();
+
+                var str = $"{TimeUtil.ToHms(timeToUpdate)} | {currentTrigger.ToString().PadLeft(3, ' ')}/{triggers.Count.ToString().PadRight(3, ' ')} | {variance:0.00} s";
+                
+                UIConsole.Show("\r".PadRight(str.Length * 2, ' '));
+                UIConsole.Show($"\r{str}");
+                
                 keepGoing = ! UIConsole.Interrupted();
                 await Task.Delay(500);
             }
         }
 
-        private async Task Watch(List<Region> triggers)
+        private async Task WatchTriggers()
         {
-            for (int i = 0; i < triggers.Count && keepGoing; i++)
+            if (! await Updated(target))
             {
-                currentTrigger = triggers[i];
-                while (! await Updated(currentTrigger)) await Task.Delay(500);
-                var newUpdate = await RepoApi.Api.LastUpdateFor(currentTrigger.name);
-                var updateStart = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixLastMinorStart();
-                var newSecondsPerNation = (newUpdate - updateStart) / currentTrigger.nationCumulative;
-                secondsPerNation.Add(newSecondsPerNation);
+                for (int i = 0; i < triggers.Count && keepGoing; i++)
+                {
+                    var trigger = triggers[i];
+                    while (! await Updated(trigger)) {}
+                    var newUpdate = await RepoApi.Api.LastUpdateFor(trigger.name);
+                    var updateStart = (nextUpdateIsMajor) ? TimeUtil.PosixNextMajorStart() : TimeUtil.PosixNextMinorStart();
+                    var newSecondsPerNation = (newUpdate - updateStart) / trigger.nationCumulative;
+                    secondsPerNation.Add(newSecondsPerNation);
+                    currentTrigger = i + 1;
+                }
             }
+            keepGoing = false;
+            UIConsole.Show("\nTarget updated.");
         }
     }
 }

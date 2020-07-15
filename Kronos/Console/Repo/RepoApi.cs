@@ -39,15 +39,13 @@ namespace Console.Repo
             lastRequest = DateTime.Now;
             // System.Console.WriteLine($"Request @ {DateTime.Now}: {response.StatusCode}");
 
-            await using var stream = response.GetResponseStream();
+            await using var stream = response.GetResponseStream() ?? throw new ProtocolViolationException("There is no response stream");
             using var reader = new StreamReader(stream);
             return await reader.ReadToEndAsync();
         }
 
         public async Task<List<string>> DelegateChangesFrom(double start)
         {
-            var api = Api;
-
             var waHappenings = new List<string>();
             var more = true;
             var i = 1;
