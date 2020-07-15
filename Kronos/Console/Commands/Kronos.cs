@@ -13,7 +13,7 @@ namespace Console.Commands
         public async Task Run()
         {
             UIConsole.Show("Creating Kronos sheet... \n");
-            
+
             var regions = await RepoDump.Dump.Regions();
             await Sheet(regions);
 
@@ -26,7 +26,10 @@ namespace Console.Commands
             var ws = wb.Worksheets.Add("TimeSheet");
 
             var row = new List<object>
-                {"Region", "Major", "Minor", "Nations", "Endo's", "Protected", "Exec. D", "Tagged", "Link", "", "World", "Data"};
+            {
+                "Region", "Major", "Minor", "Nations", "Endo's", "Protected", "Exec. D", "Tagged", "Link", "", "World",
+                "Data"
+            };
             ws.AddRow(1, row);
 
             var majorTime = await RepoDump.Dump.MajorTook();

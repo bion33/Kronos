@@ -58,7 +58,7 @@ namespace Console.Commands
                 ws.AddRow(i, row);
                 ws.Cell($"G{i}").SetValue(region.url).Hyperlink = new XLHyperlink(region.url);
             }
-            
+
             ws.Range("A1:G1").Style.Fill.BackgroundColor = XLColor.Gray;
             ws.Range("I1:J1").Style.Fill.BackgroundColor = XLColor.Gray;
             ws.Row(1).Style.Font.Bold = true;

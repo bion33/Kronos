@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Console.UI;
 
@@ -9,7 +10,7 @@ namespace Console.Commands
         public async Task Run()
         {
             UIConsole.Show("Goodbye!\n");
-            System.Environment.Exit(0);
+            Environment.Exit(0);
         }
     }
 }

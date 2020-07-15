@@ -18,9 +18,9 @@ namespace Console.Repo
         private static RepoDump dump;
         private readonly string dumpGz = $".Regions_{TimeUtil.DateForPath()}.xml.gz";
         private readonly string dumpXml = $".Regions_{TimeUtil.DateForPath()}.xml";
+        private int numNations;
 
         private List<Region> regions;
-        private int numNations = 0;
 
         private RepoDump()
         {
@@ -109,18 +109,18 @@ namespace Console.Repo
 
             await AddMinorUpdateTimes();
             AddReadableUpdateTimes();
-            
+
             return regions;
         }
 
         private async Task AddMinorUpdateTimes()
         {
-            var minorDuration = await RepoApi.Api.EndOfMinor() - TimeUtil.PosixLastMinorStart();
+            var minorDuration = await RepoApi.Api.EndOfMinor() - TimeUtil.UnixLastMinorStart();
             var minorTick = minorDuration / numNations;
-            
+
             for (var i = 0; i < regions.Count; i++)
                 regions[i].minorUpdateTime = i == 0
-                    ? regions[i].nationCount * minorTick + TimeUtil.PosixLastMinorStart()
+                    ? regions[i].nationCount * minorTick + TimeUtil.UnixLastMinorStart()
                     : regions[i - 1].minorUpdateTime + regions[i].nationCount * minorTick;
         }
 
@@ -132,7 +132,7 @@ namespace Console.Repo
                 regions[i].readableMinorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].minorUpdateTime);
             }
         }
-        
+
         public async Task<double> MajorTook()
         {
             await EnsureDumpReady();
@@ -140,7 +140,7 @@ namespace Console.Repo
 
             return regions.Last().majorUpdateTime - regions.First().majorUpdateTime;
         }
-        
+
         public async Task<double> MinorTook()
         {
             await EnsureDumpReady();

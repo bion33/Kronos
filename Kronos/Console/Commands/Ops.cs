@@ -37,9 +37,9 @@ namespace Console.Commands
         private double GetStart()
         {
             if (TimeUtil.Today().AddHours(3) < TimeUtil.Now() && TimeUtil.Now() < TimeUtil.Today().AddHours(14))
-                return TimeUtil.PosixLastMajorStart();
+                return TimeUtil.UnixLastMajorStart();
 
-            return TimeUtil.PosixLastMinorStart();
+            return TimeUtil.UnixLastMinorStart();
         }
 
         private async Task<List<string>> GetDelegateMoves(string del, double since)
@@ -62,8 +62,8 @@ namespace Console.Commands
         {
             foreach (var move in delegateMoves)
             {
-                var timestamp = int.Parse(move.Find( "<TIMESTAMP>(.*?)</TIMESTAMP>"));
-                if (timestamp < becameDelegateTime) return move.Find( "<TEXT>(.*?)</TEXT>");
+                var timestamp = int.Parse(move.Find("<TIMESTAMP>(.*?)</TIMESTAMP>"));
+                if (timestamp < becameDelegateTime) return move.Find("<TEXT>(.*?)</TEXT>");
             }
 
             return null;

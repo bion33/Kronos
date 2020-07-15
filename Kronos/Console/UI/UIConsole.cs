@@ -5,6 +5,7 @@ using Console.Commands;
 
 namespace Console.UI
 {
+    /// <summary> Console user interface. This class is for interaction with the user trough the console. </summary>
     public class UIConsole
     {
         private const string HelpText = "\nKronos Quick Help\n" +
@@ -23,20 +24,24 @@ namespace Console.UI
                                         "Add -q as the last parameter if you want Kronos to automatically quit.\n" +
                                         "\n";
 
-        public static List<ICommand> GetCommands(string[] initialArgs)
+        /// <summary> Parse initial options or ask user </summary>
+        public static List<ICommand> UserCommandInput(string[] initialOptions)
         {
-            var args = initialArgs.ToList();
+            var options = initialOptions.ToList();
             var commands = new List<ICommand>();
 
-            var correctArgs = false;
-            while (args.Count == 0 || !correctArgs)
+            // Initially, assume the arguments are incorrect
+            var correctOptions = false;
+            while (options.Count == 0 || !correctOptions)
             {
-                correctArgs = args.Count > 0;
-                foreach (var arg in args)
-                    switch (arg.ToLower())
+                // If there are any options, assume they are correct
+                correctOptions = options.Count > 0;
+
+                foreach (var option in options)
+                    switch (option.ToLower())
                     {
                         case "-q":
-                        case "-quit": 
+                        case "-quit":
                             commands.Add(new Quit());
                             break;
                         case "-d":
@@ -56,21 +61,25 @@ namespace Console.UI
                             commands.Add(new Timer());
                             break;
                         default:
-                            correctArgs = false;
+                            // The options are considered incorrect if any option didn't match any of the above
+                            correctOptions = false;
                             break;
                     }
 
-                if (args.Count > 0 && correctArgs) continue;
+                // Skip asking new options if there are given options and they are correct
+                if (options.Count > 0 && correctOptions) continue;
 
+                // Ask new options
                 Show(HelpText);
                 Show("What do you want to do?\n");
                 Show("Kronos ");
-                args = GetInput().Split(" ").ToList();
+                options = GetInput().Split(" ").ToList();
             }
 
             return commands;
         }
 
+        /// <summary> Get the user-specific part of the User-Agent to be sent with requests to NationStates </summary>
         public static string GetUserInfo()
         {
             Show("You need to provide your nation name or email address once. This is needed to comply " +
@@ -80,16 +89,19 @@ namespace Console.UI
             return GetInput();
         }
 
+        /// <summary> Wrapper for Console.Write </summary>
         public static void Show(string message)
         {
             System.Console.Write(message);
         }
 
+        /// <summary> Wrapper for Console.ReadLine </summary>
         public static string GetInput()
         {
             return System.Console.ReadLine();
         }
 
+        /// <summary> Check if "Q" was pressed without blocking program execution </summary>
         public static bool Interrupted()
         {
             return System.Console.KeyAvailable && System.Console.ReadKey(true).Key == ConsoleKey.Q;

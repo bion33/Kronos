@@ -12,12 +12,12 @@ namespace Console.Repo
     {
         private static RepoApi api;
         private readonly Queue<string> queue = new Queue<string>();
+        private DateTime lastRequest = DateTime.Now;
         private int numNations;
         private List<string> taggedDefender;
         private List<string> taggedFounderless;
         private List<string> taggedInvader;
         private List<string> taggedPassword;
-        private DateTime lastRequest = DateTime.Now;
 
         private RepoApi()
         {
@@ -28,18 +28,20 @@ namespace Console.Repo
         public async Task<string> Request(string url)
         {
             queue.Enqueue(url);
-            while (queue.Peek() != url || lastRequest > DateTime.Now.AddSeconds(-1)) await Task.Delay(1000 - (int) (DateTime.Now - lastRequest).TotalMilliseconds);
+            while (queue.Peek() != url || lastRequest > DateTime.Now.AddSeconds(-1))
+                await Task.Delay(1000 - (int) (DateTime.Now - lastRequest).TotalMilliseconds);
 
             var request = (HttpWebRequest) WebRequest.Create(url);
             request.UserAgent = Shared.UserAgent;
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             using var response = (HttpWebResponse) await request.GetResponseAsync();
-            
+
             queue.Dequeue();
             lastRequest = DateTime.Now;
             // System.Console.WriteLine($"Request @ {DateTime.Now}: {response.StatusCode}");
 
-            await using var stream = response.GetResponseStream() ?? throw new ProtocolViolationException("There is no response stream");
+            await using var stream = response.GetResponseStream() ??
+                                     throw new ProtocolViolationException("There is no response stream");
             using var reader = new StreamReader(stream);
             return await reader.ReadToEndAsync();
         }
@@ -127,7 +129,7 @@ namespace Console.Repo
         public async Task<double> EndOfMinor()
         {
             var decrementInterval = 900;
-            var presumedEnd = TimeUtil.PosixLastMinorEnd();
+            var presumedEnd = TimeUtil.UnixLastMinorEnd();
             var lastInfluenceChange = 0;
 
             while (lastInfluenceChange == 0)
