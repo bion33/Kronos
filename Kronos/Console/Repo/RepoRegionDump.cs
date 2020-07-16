@@ -11,25 +11,30 @@ using Console.Utilities;
 
 namespace Console.Repo
 {
-    public class RepoDump
+    /// <summary> NS region data from dump </summary>
+    public class RepoRegionDump
     {
         private const string DumpUrl = "https://www.nationstates.net/pages/regions.xml.gz";
 
-        private static RepoDump dump;
+        private static RepoRegionDump dump;
         private readonly string dumpGz = $".Regions_{TimeUtil.DateForPath()}.xml.gz";
         private readonly string dumpXml = $".Regions_{TimeUtil.DateForPath()}.xml";
         private int numNations;
 
         private List<Region> regions;
 
-        private RepoDump()
+        /// <summary> This class is a singleton </summary>
+        private RepoRegionDump()
         {
         }
 
-        public static RepoDump Dump => dump ??= new RepoDump();
+        /// <summary> This class is a singleton </summary>
+        public static RepoRegionDump Dump => dump ??= new RepoRegionDump();
 
+        /// <summary> Make sure the latest region dump is downloaded and extracted, and old ones are removed </summary>
         private async Task EnsureDumpReady()
         {
+            // If dump xml exists, skip
             if (File.Exists(dumpXml)) return;
 
             RemoveOldDumps();
@@ -37,14 +42,17 @@ namespace Console.Repo
             await ExtractGz(dumpGz, dumpXml);
         }
 
+        /// <summary> Remove outdated region dumps </summary>
         private void RemoveOldDumps()
         {
             var dir = new DirectoryInfo(".");
             foreach (var file in dir.EnumerateFiles(".Regions_*.xml")) file.Delete();
         }
 
+        /// <summary> Download regions dump archive </summary>
         private async Task GetDumpAsync(string url)
         {
+            // If dump archive or xml exists, skip
             if (File.Exists(dumpGz) || File.Exists(dumpXml)) return;
 
             var request = (HttpWebRequest) WebRequest.Create(url);
@@ -55,43 +63,50 @@ namespace Console.Repo
             if (stream != null) await stream.CopyToAsync(file);
         }
 
+        /// <summary> Extract regions dump archive to XML </summary>
         private async Task ExtractGz(string gzLocation, string outputLocation)
         {
+            // If dump xml exists, skip
             if (File.Exists(dumpXml)) return;
 
+            // Extract
             await using var inStream = new FileStream(gzLocation, FileMode.Open, FileAccess.Read);
             await using var zipStream = new GZipStream(inStream, CompressionMode.Decompress);
             await using var outStream = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
+
+            // Save
             var tempBytes = new byte[4096];
             int i;
             while ((i = zipStream.Read(tempBytes, 0, tempBytes.Length)) != 0) outStream.Write(tempBytes, 0, i);
+
+            // Delete archive
             File.Delete(dumpGz);
         }
 
-        public async Task<double> EndOfMajor()
-        {
-            await EnsureDumpReady();
-
-            return int.Parse(XElement.Load(dumpXml).LastNode.XPathSelectElement("LASTUPDATE").Value);
-        }
-
+        /// <summary> Get parsed regions from dump </summary>
         public async Task<List<Region>> Regions()
         {
+            // Make sure regions dump is downloaded & extracted
             await EnsureDumpReady();
 
+            // Skip if already did this before
             if (regions != null) return regions;
 
             var api = RepoApi.Api;
             regions = new List<Region>();
-            var regionsXml = XElement.Load(dumpXml).Elements("REGION");
             numNations = 0;
 
+            // Parse XML
+            var regionsXml = XElement.Load(dumpXml).Elements("REGION");
             foreach (var element in regionsXml)
             {
                 var name = element.XPathSelectElement("NAME").Value;
                 var nations = int.Parse(element.XPathSelectElement("NUMNATIONS").Value);
+
+                // Count nations
                 numNations += nations;
 
+                // Get region info from XML, and complete it with data from the API
                 regions.Add(new Region
                 {
                     name = name,
@@ -100,10 +115,10 @@ namespace Console.Repo
                     nationCumulative = numNations,
                     delegateVotes = int.Parse(element.XPathSelectElement("DELEGATEVOTES").Value),
                     delegateAuthority = element.XPathSelectElement("DELEGATEAUTH").Value,
+                    majorUpdateTime = int.Parse(element.XPathSelectElement("LASTUPDATE").Value),
                     founderless = (await api.TaggedFounderless()).Contains(name),
                     password = (await api.TaggedPassword()).Contains(name),
-                    tagged = (await api.TaggedInvader()).Contains(name),
-                    majorUpdateTime = int.Parse(element.XPathSelectElement("LASTUPDATE").Value)
+                    tagged = (await api.TaggedInvader()).Contains(name)
                 });
             }
 
@@ -113,6 +128,7 @@ namespace Console.Repo
             return regions;
         }
 
+        /// <summary> Calculate minor for every region (can't get that from dump) </summary>
         private async Task AddMinorUpdateTimes()
         {
             var minorDuration = await RepoApi.Api.EndOfMinor() - TimeUtil.UnixLastMinorStart();
@@ -124,6 +140,7 @@ namespace Console.Repo
                     : regions[i - 1].minorUpdateTime + regions[i].nationCount * minorTick;
         }
 
+        /// <summary> Calculate readable update time (as HH:MM:SS since the start of each update) </summary>
         private void AddReadableUpdateTimes()
         {
             for (var i = 0; i < regions.Count; i++)
@@ -133,6 +150,7 @@ namespace Console.Repo
             }
         }
 
+        /// <summary> Calculate length of last major </summary>
         public async Task<double> MajorTook()
         {
             await EnsureDumpReady();
@@ -141,6 +159,7 @@ namespace Console.Repo
             return regions.Last().majorUpdateTime - regions.First().majorUpdateTime;
         }
 
+        /// <summary> Calculate length of last minor </summary>
         public async Task<double> MinorTook()
         {
             await EnsureDumpReady();
@@ -149,6 +168,7 @@ namespace Console.Repo
             return regions.Last().minorUpdateTime - regions.First().minorUpdateTime;
         }
 
+        /// <summary> Calculate length of last major </summary>
         public async Task<double> MajorTick()
         {
             await EnsureDumpReady();
@@ -157,6 +177,7 @@ namespace Console.Repo
             return await MajorTook() / (await NumNations() + 0.0);
         }
 
+        /// <summary> Calculate seconds/nation for minor </summary>
         public async Task<double> MinorTick()
         {
             await EnsureDumpReady();
@@ -165,6 +186,10 @@ namespace Console.Repo
             return await MinorTook() / (await NumNations() + 0.0);
         }
 
+        /// <summary>
+        ///     Make sure the dump is parsed, then return the amount of nations on NS at that point in time. This can be
+        ///     gotten up-to-date from the API, but the dump-version must be used in dump-based calculations.
+        /// </summary>
         public async Task<int> NumNations()
         {
             await EnsureDumpReady();

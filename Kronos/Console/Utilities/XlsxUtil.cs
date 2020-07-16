@@ -12,7 +12,10 @@ namespace Console.Utilities
             for (var i = 1; i < values.Count + 1; i++) sheet.Cell(index, i).Value = values[i - 1];
         }
 
-        /// <summary> Add a table with overall update statistics to a sheet, with the top-left cell located at firstRow, firstColumn </summary>
+        /// <summary>
+        ///     Add a table with overall update statistics to a sheet, with the top-left cell located at firstRow,
+        ///     firstColumn
+        /// </summary>
         public static void AddWorldData(this IXLWorksheet sheet, int firstRow, int firstColumn, int nationCount,
             int majorTime, int minorTime)
         {

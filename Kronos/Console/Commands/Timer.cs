@@ -21,7 +21,7 @@ namespace Console.Commands
         public async Task Run()
         {
             UIConsole.Show("Preparing region data... \n");
-            var regions = await RepoDump.Dump.Regions();
+            var regions = await RepoRegionDump.Dump.Regions();
             var index = -1;
 
             while (index < 0)
@@ -36,8 +36,10 @@ namespace Console.Commands
 
             target = regions[index];
             nextUpdateIsMajor = TimeUtil.UnixLastMajorStart() < TimeUtil.UnixLastMinorStart();
-            var lastUpdateTook = nextUpdateIsMajor ? await RepoDump.Dump.MajorTook() : await RepoDump.Dump.MinorTook();
-            var interval = (int) (LastTriggerSecondsBeforeTarget * await RepoDump.Dump.NumNations() /
+            var lastUpdateTook = nextUpdateIsMajor
+                ? await RepoRegionDump.Dump.MajorTook()
+                : await RepoRegionDump.Dump.MinorTook();
+            var interval = (int) (LastTriggerSecondsBeforeTarget * await RepoRegionDump.Dump.NumNations() /
                                   (lastUpdateTook + 0.0));
 
             triggers = Triggers(index, regions, interval);
@@ -48,7 +50,7 @@ namespace Console.Commands
 
             secondsPerNation = new List<double>
             {
-                nextUpdateIsMajor ? await RepoDump.Dump.MajorTick() : await RepoDump.Dump.MinorTick()
+                nextUpdateIsMajor ? await RepoRegionDump.Dump.MajorTick() : await RepoRegionDump.Dump.MinorTick()
             };
 
             currentTrigger = 1;
@@ -99,8 +101,8 @@ namespace Console.Commands
             while (keepGoing)
             {
                 var current = secondsPerNation.Last();
-                var last = (secondsPerNation.Count > 1) ? secondsPerNation[secondsPerNation.Count - 2] : current;
-                var variance = (current * target.nationCumulative) - (last * target.nationCumulative);
+                var last = secondsPerNation.Count > 1 ? secondsPerNation[secondsPerNation.Count - 2] : current;
+                var variance = current * target.nationCumulative - last * target.nationCumulative;
                 var timeToUpdate = NextUpdateFor(target, current) - TimeUtil.UnixNow();
 
                 var str =

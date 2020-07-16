@@ -14,7 +14,7 @@ namespace Console.Utilities
             var textInfo = new CultureInfo("en-UK", false).TextInfo;
             return textInfo.ToTitleCase(s);
         }
-        
+
         /// <summary>
         ///     Apply a regex pattern to a source string, and retrieve the first group from the first match
         ///     Used to extract XML data

@@ -14,7 +14,7 @@ namespace Console.Commands
         {
             UIConsole.Show("Creating Kronos sheet... \n");
 
-            var regions = await RepoDump.Dump.Regions();
+            var regions = await RepoRegionDump.Dump.Regions();
             await Sheet(regions);
 
             UIConsole.Show("Done. \n");
@@ -32,9 +32,9 @@ namespace Console.Commands
             };
             ws.AddRow(1, row);
 
-            var majorTime = await RepoDump.Dump.MajorTook();
-            var minorTime = await RepoDump.Dump.MinorTook();
-            var nations = await RepoDump.Dump.NumNations();
+            var majorTime = await RepoRegionDump.Dump.MajorTook();
+            var minorTime = await RepoRegionDump.Dump.MinorTook();
+            var nations = await RepoRegionDump.Dump.NumNations();
 
             ws.AddWorldData(2, 11, nations, (int) majorTime, (int) minorTime);
 

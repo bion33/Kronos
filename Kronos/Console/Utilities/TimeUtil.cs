@@ -61,11 +61,10 @@ namespace Console.Utilities
 
             return NsToUtc(Today().AddDays(-1)).Subtract(Epoch()).TotalSeconds;
         }
-        
+
         /// <summary>
         ///     The definite end of the last major update. If a major update is currently happening, it is not
         ///     considered by this method, instead yesterday's major update is used.
-        /// 
         ///     To be safe, the end of a major update is taken as 3 hours after its start.
         /// </summary>
         public static double UnixLastMajorEnd()
@@ -91,11 +90,10 @@ namespace Console.Utilities
 
             return NsToUtc(Today().AddDays(-1).AddHours(12)).Subtract(Epoch()).TotalSeconds;
         }
-        
+
         /// <summary>
         ///     The definite end of the last minor update. If a minor update is currently happening, it is not
         ///     considered by this method, instead yesterday's minor update is used.
-        /// 
         ///     To be safe, the end of a minor update is taken as 2 hours after its start.
         /// </summary>
         public static double UnixLastMinorEnd()

@@ -15,7 +15,7 @@ namespace Console.Commands
         {
             UIConsole.Show("Creating Detag sheet... \n");
 
-            var regions = await RepoDump.Dump.Regions();
+            var regions = await RepoRegionDump.Dump.Regions();
             regions = Filter(regions);
             await Sheet(regions);
 
@@ -37,9 +37,9 @@ namespace Console.Commands
                 {"Region", "Major", "Minor", "Nations", "Endo's", "Founder", "Link", "", "World", "Data"};
             ws.AddRow(1, row);
 
-            var majorTime = await RepoDump.Dump.MajorTook();
-            var minorTime = await RepoDump.Dump.MinorTook();
-            var nations = await RepoDump.Dump.NumNations();
+            var majorTime = await RepoRegionDump.Dump.MajorTook();
+            var minorTime = await RepoRegionDump.Dump.MinorTook();
+            var nations = await RepoRegionDump.Dump.NumNations();
 
             ws.AddWorldData(2, 9, nations, (int) majorTime, (int) minorTime);
 
