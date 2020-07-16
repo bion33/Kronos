@@ -10,7 +10,7 @@ namespace Console.Commands
 {
     public class Timer : ICommand
     {
-        private const int LastTriggerSecondsBeforeTarget = 3;
+        private const int LastTriggerSecondsBeforeTarget = 5;
         private int currentTrigger;
         private bool keepGoing = true;
         private bool nextUpdateIsMajor;
@@ -98,13 +98,13 @@ namespace Console.Commands
         {
             while (keepGoing)
             {
-                var average = secondsPerNation.Sum() / secondsPerNation.Count;
                 var current = secondsPerNation.Last();
-                var variance = current - average;
+                var last = (secondsPerNation.Count > 1) ? secondsPerNation[secondsPerNation.Count - 2] : current;
+                var variance = (current * target.nationCumulative) - (last * target.nationCumulative);
                 var timeToUpdate = NextUpdateFor(target, current) - TimeUtil.UnixNow();
 
                 var str =
-                    $"{TimeUtil.ToHms(timeToUpdate)} | {currentTrigger.ToString().PadLeft(3, ' ')}/{triggers.Count.ToString().PadRight(3, ' ')} | {variance:0.00} s";
+                    $"{TimeUtil.ToHms(timeToUpdate)} | {currentTrigger.ToString().PadLeft(3, ' ')}/{triggers.Count.ToString().PadRight(3, ' ')} | {variance:0.} s";
 
                 UIConsole.Show("\r".PadRight(str.Length * 2, ' '));
                 UIConsole.Show($"\r{str}");
