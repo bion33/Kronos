@@ -3,13 +3,22 @@ using TimeZoneConverter;
 
 namespace Console.Utilities
 {
-    /// <summary> Common utilities for working with time, timezones and (calculated) timestamps </summary>
+    /// <summary>
+    ///     Common utilities for working with time, timezones and (calculated) timestamps.
+    ///
+    ///     Note:
+    ///     It is preferable to work in this timezone, because updates happen at a fixed offset from the start of the
+    ///     day (in this timezone). The server respects DST changes, making calculating offsets in UTC or local
+    ///     timezones a hassle. Keep this in mind when working with Unix Time also, simply adding a fixed amount of
+    ///     hours won't work on the day DST goes into or out of effect. To be safe, convert any time to EST, then
+    ///     manipulate it, then convert it back to the required format / timezone.
+    /// </summary>
     public static class TimeUtil
     {
-        /// <summary> Timezone of the NationStates server </summary>
+        /// <summary> Timezone of the NationStates server. </summary>
         private static readonly TimeZoneInfo Tz = TZConvert.GetTimeZoneInfo("America/New_York");
 
-        /// <summary> Unix epoch </summary>
+        /// <summary> The Unix epoch </summary>
         public static DateTime Epoch()
         {
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -21,7 +30,7 @@ namespace Console.Utilities
             return UtcToNs(DateTime.UtcNow);
         }
 
-        /// <summary> The current Unix time </summary>
+        /// <summary> The current Unix time (seconds since Unix Epoch) </summary>
         public static double UnixNow()
         {
             return DateTime.UtcNow.Subtract(Epoch()).TotalSeconds;
