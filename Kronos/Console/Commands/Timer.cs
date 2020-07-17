@@ -104,9 +104,11 @@ namespace Console.Commands
                 var last = secondsPerNation.Count > 1 ? secondsPerNation[secondsPerNation.Count - 2] : current;
                 var variance = current * target.nationCumulative - last * target.nationCumulative;
                 var timeToUpdate = NextUpdateFor(target, current) - TimeUtil.UnixNow();
+                
+                var trigger = currentTrigger.ToString().PadLeft(3, ' ');
+                var relevantTriggers = (triggers.Count - 1).ToString().PadRight(3, ' ');    
 
-                var str =
-                    $"{TimeUtil.ToHms(timeToUpdate)} | {currentTrigger.ToString().PadLeft(3, ' ')}/{triggers.Count.ToString().PadRight(3, ' ')} | {variance:0.} s";
+                var str = $"{TimeUtil.ToHms(timeToUpdate)} | {trigger}/{relevantTriggers} | {variance:0.} s";
 
                 UIConsole.Show("\r".PadRight(str.Length * 2, ' '));
                 UIConsole.Show($"\r{str}");
