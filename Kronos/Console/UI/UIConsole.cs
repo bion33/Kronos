@@ -10,14 +10,15 @@ namespace Console.UI
     {
         private const string HelpText = "\nKronos Quick Help\n" +
                                         "\n" +
-                                        "    Syntax: Kronos [-d] [-k] [-o] [-q] [-t]\n" +
+                                        "    Syntax: Kronos [-d] [-k] [-o] [-t region name] [-q]\n" +
                                         "\n" +
                                         "Options:\n" +
                                         "  -d, -detag:   an update sheet limited to detag-able regions.\n" +
                                         "  -k, -kronos:  an update sheet for all regions.\n" +
                                         "  -o, -ops:     likely military operations from the last update.\n" +
+                                        "  -t, -timer:   (approximate) count down to the moment a region updates,\n" +
+                                        "                the target can be given later or directly after this option.\n" +
                                         "  -q, -quit:    exit Kronos. Use as last option to automatically quit.\n" +
-                                        "  -t, -timer:   (approximate) count down to the moment a region updates.\n" +
                                         "\n" +
                                         "See \"Purpose & Use\" in the README for more information.\n" +
                                         "The order of the parameters determines the order of execution.\n" +
@@ -35,9 +36,11 @@ namespace Console.UI
             {
                 // If there are any options, assume they are correct
                 correctOptions = options.Count > 0;
-
+                var argumentsList = new List<string>();
                 foreach (var option in options)
-                    switch (option.ToLower())
+                {
+                    var opt = option.ToLower();
+                    switch (opt)
                     {
                         case "-q":
                         case "-quit":
@@ -57,13 +60,18 @@ namespace Console.UI
                             break;
                         case "-t":
                         case "-timer":
-                            commands.Add(new Timer());
+                            var arguments = ExtractOptionArguments(opt, options);
+                            argumentsList.AddRange(arguments);
+                            commands.Add(new Timer(arguments));
                             break;
                         default:
-                            // The options are considered incorrect if any option didn't match any of the above
+                            // If it is an argument to an option, consider it correct
+                            if (argumentsList.Contains(opt)) break;
+                            // The options are considered incorrect if any option didn't match any of the above situations
                             correctOptions = false;
                             break;
-                    }
+                    }   
+                }
 
                 // Skip asking new options if there are given options and they are correct
                 if (options.Count > 0 && correctOptions) continue;
@@ -78,6 +86,27 @@ namespace Console.UI
             return commands;
         }
 
+        /// <summary>
+        ///     Get the arguments for a specific option, which are considered any options following it which do not
+        ///     contain a dash ("-")
+        /// </summary>
+        private static List<string> ExtractOptionArguments(string option, List<string> options)
+        {
+            var optionArguments = new List<string>();
+            var optionIndex = options.IndexOf(option);
+
+            for (int i = optionIndex + 1; i < options.Count; i++)
+            {
+                // Break when reaching next option
+                if (options[i].Contains("-")) break;
+                
+                // If not an option, consider it an argument when this method is invoked (if not it'll be considered wrong)
+                optionArguments.Add(options[i].ToLower());
+            }
+            
+            return optionArguments;
+        }
+        
         /// <summary> Get the user-specific part of the User-Agent to be sent with requests to NationStates </summary>
         public static string GetUserInfo()
         {
