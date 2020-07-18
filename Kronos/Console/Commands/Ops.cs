@@ -9,32 +9,39 @@ using Console.Utilities;
 
 namespace Console.Commands
 {
+    /// <summary> Command to generate a report of likely military operations during the last (major or minor) update </summary>
     public class Ops : ICommand
     {
+        /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
         public async Task Run()
         {
             UIConsole.Show("Compiling operations report... \n");
 
             var api = RepoApi.Api;
 
-            var start = GetStart();
-            var end = start + 3 * 3600;
+            // Start and end of last (major or minor) update
+            var updateStart = StartOfLastUpdate();
+            var updateEnd = updateStart + 3 * 3600;
 
-            var changes = await api.DelegateChangesFrom(start);
-            var invaders = await api.TaggedInvader();
-            var defenders = await api.TaggedDefender();
+            // Get happenings
+            var delegateChangeHappenings = await api.DelegateChangesFrom(updateStart);
 
-            var delegacyChanges = DelegacyChanges(changes);
+            // Parse each happening to the DelegacyChange DTO
+            var delegacyChanges = DelegacyChanges(delegateChangeHappenings);
 
-            var ops = await FilterOps(delegacyChanges, end - 86400, invaders, defenders);
-
+            // Filter out the suspicious changes from among the (supposedly) legitimate changes
+            var ops = await FilterOps(delegacyChanges, updateEnd - 86400);
+            
+            // Generate report
             var report = Report(ops);
 
+            // Save
             File.WriteAllText($"Kronos-Ops_{TimeUtil.DateForPath()}.md", report);
             UIConsole.Show("Done. \n");
         }
 
-        private double GetStart()
+        /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
+        private double StartOfLastUpdate()
         {
             if (TimeUtil.Today().AddHours(3) < TimeUtil.Now() && TimeUtil.Now() < TimeUtil.Today().AddHours(14))
                 return TimeUtil.UnixLastMajorStart();
@@ -42,24 +49,21 @@ namespace Console.Commands
             return TimeUtil.UnixLastMinorStart();
         }
 
-        private async Task<List<string>> GetDelegateMoves(string del, double since)
+        /// <summary> Get "move" happenings for a nation since a Unix timestamp </summary>
+        private async Task<List<string>> LastMoves(string nationName, double since)
         {
-            try
-            {
-                var api = RepoApi.Api;
-                var url =
-                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{del};filter=move;sincetime={since}";
-                var response = await api.Request(url);
-                return response.FindAll("<EVENT(.*?)</EVENT>");
-            }
-            catch (HttpRequestException)
-            {
-                return new List<string>();
-            }
+            var api = RepoApi.Api;
+            var url =
+                $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;view=nation.{nationName};filter=move;sincetime={since}";
+            var response = await api.Request(url);
+            return response.FindAll("<EVENT(.*?)</EVENT>");
         }
 
-        private string GetMoveBeforeBecomingDelegate(List<string> delegateMoves, double becameDelegateTime)
+        /// <summary> Get the "move" which happened right before the Unix timestamp at which the nation became WA Delegate </summary>
+        private string MoveBeforeBecomingDelegate(List<string> delegateMoves, double becameDelegateTime)
         {
+            // Due to the order of happenings received from NS always being last -> earliest, we can do a simple comparison.
+            // The first move to have happened before becameDelegateTime is the one we need.
             foreach (var move in delegateMoves)
             {
                 var timestamp = int.Parse(move.Find("<TIMESTAMP>(.*?)</TIMESTAMP>"));
@@ -69,6 +73,7 @@ namespace Console.Commands
             return null;
         }
 
+        /// <summary> Convert each delegacy change happening to the DelegacyChange DTO </summary>
         private static List<DelegacyChange> DelegacyChanges(List<string> changes)
         {
             var delegacyChanges = new List<DelegacyChange>();
@@ -154,7 +159,7 @@ namespace Console.Commands
             // If no operations
             if (ops.Count == 0)
             {
-                report += "# === No suspicious activity found ===\n";
+                report += "\n# === No suspicious activity found ===\n";
             }
             // If any operations
             else
@@ -170,18 +175,8 @@ namespace Console.Commands
                         report += $"* Possible raider activity in {p.Key} \n{link}\n";
                     });
                 }
-
-                var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
-                if (suspicious.Count > 0)
-                {
-                    report += $"\n# === {suspicious.Count} Suspicious Delegacy Changes === \n";
-                    suspicious.ForEach(p =>
-                    {
-                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
-                        report += $"* Suspicious delegacy change in {p.Key} \n{link}\n";
-                    });
-                }
-
+                
+                // Defences
                 var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
                 if (defended.Count > 0)
                 {
@@ -192,15 +187,24 @@ namespace Console.Commands
                         report += $"* Likely defence operation in {p.Key} \n{link}\n";
                     });
                 }
-            }
-            else
-            {
-                report += "# === No suspicious activity found ===\n";
+                
+                // Other
+                var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
+                if (suspicious.Count > 0)
+                {
+                    report += $"\n# === {suspicious.Count} Suspicious Delegacy Changes === \n";
+                    suspicious.ForEach(p =>
+                    {
+                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
+                        report += $"* Suspicious delegacy change in {p.Key} \n{link}\n";
+                    });
+                }
             }
 
             return report;
         }
 
+        /// <summary> DTO for delegacy change happenings </summary>
         private struct DelegacyChange
         {
             public string region;
@@ -208,6 +212,7 @@ namespace Console.Commands
             public int changeTimeStamp;
         }
 
+        /// <summary> Enum for categorising operations </summary>
         private enum OpType
         {
             Defence,
