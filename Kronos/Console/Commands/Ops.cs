@@ -126,7 +126,7 @@ namespace Console.Commands
                 var invaded = ops.Where(p => p.Value == OpType.Invasion).ToList();
                 if (invaded.Count > 0)
                 {
-                    report += $"# === {invaded.Count} Possible Raider Activity === \n";
+                    report += $"\n# === {invaded.Count} Possible Raider Activity === \n";
                     invaded.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
@@ -137,7 +137,7 @@ namespace Console.Commands
                 var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
                 if (suspicious.Count > 0)
                 {
-                    report += $"# === {suspicious.Count} Suspicious Delegacy Changes === \n";
+                    report += $"\n# === {suspicious.Count} Suspicious Delegacy Changes === \n";
                     suspicious.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
@@ -148,7 +148,7 @@ namespace Console.Commands
                 var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
                 if (defended.Count > 0)
                 {
-                    report += $"# === {defended.Count} Likely Defence Operations === \n";
+                    report += $"\n# === {defended.Count} Likely Defence Operations === \n";
                     defended.ForEach(p =>
                     {
                         var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";

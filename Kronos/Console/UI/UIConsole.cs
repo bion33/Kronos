@@ -14,14 +14,13 @@ namespace Console.UI
                                         "\n" +
                                         "Options:\n" +
                                         "  -d, -detag:   an update sheet limited to detag-able regions.\n" +
-                                        "  -k, -kronos:  the full update times sheet.\n" +
+                                        "  -k, -kronos:  an update sheet for all regions.\n" +
                                         "  -o, -ops:     likely military operations from the last update.\n" +
-                                        "  -q, -quit:    exit Kronos.\n" +
-                                        "  -t, -timer:   time to when a region updates. Implies [-k].\n" +
+                                        "  -q, -quit:    exit Kronos. Use as last option to automatically quit.\n" +
+                                        "  -t, -timer:   (approximate) count down to the moment a region updates.\n" +
                                         "\n" +
                                         "See \"Purpose & Use\" in the README for more information.\n" +
                                         "The order of the parameters determines the order of execution.\n" +
-                                        "Add -q as the last parameter if you want Kronos to automatically quit.\n" +
                                         "\n";
 
         /// <summary> Parse initial options or ask user </summary>
