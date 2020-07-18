@@ -83,34 +83,61 @@ namespace Console.Commands
             return delegacyChanges;
         }
 
-        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
-            List<string> invaders, List<string> defenders)
+        /// <summary>
+        ///     Go trough the delegacy changes to filter out the suspicious ones. A suspicious change is one where the
+        ///     new delegate just moved into the region before becoming delegate, which commonly happens during tag raids
+        ///     and detags, or during surprise invasions on small regions. This method cannot filter out big raids,
+        ///     defences and sieges which happen over the course of multiple days.
+        /// </summary>
+        /// <returns> A dictionary with region-name, OpType pairs </returns>
+        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since)
         {
+            // Get regions with tag
+            var invaders = await RepoApi.Api.TaggedInvader();
+            var imperialists = await RepoApi.Api.TaggedImperialist();
+            var defenders = await RepoApi.Api.TaggedDefender();
+
             var ops = new Dictionary<string, OpType>();
+            
+            // For each delegacy change
             for (var i = 0; i < delegacyChanges.Count; i++)
             {
+                // Delegate nation name
                 var delegateName = delegacyChanges[i].newDelegate;
-                var delMoves = await GetDelegateMoves(delegateName, since);
-
+                // Get the last moves made by that nation since ...
+                var delMoves = await LastMoves(delegateName, since);
+                
+                // If the nation moved since ...
                 if (delMoves.Count > 0)
                 {
+                    // Get the move right before becoming delegate
                     var moveBeforeBecomingWaD =
-                        GetMoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
+                        MoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
+
+                    // Skip change if nation didn't move before becoming delegate (it might have moved after)
                     if (moveBeforeBecomingWaD == null) continue;
 
                     var region = TextUtil.ToTitleCase(delegacyChanges[i].region.Replace("_", " "));
-                    var link = $"https://www.nationstates.net/region={delegacyChanges[i].region}";
-                    if (invaders.Any(x => x.ToLower().Replace(" ", "_") == moveBeforeBecomingWaD))
+                    var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
+
+                    // Determine operation type
+                    if (invaders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom)
+                        || imperialists.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
                     {
+                        // If the incoming delegate came from a region tagged "invader" or "imperialist",
+                        // it's probably a tag raid or surprise invasion
                         ops[region] = OpType.Invasion;
+                    }
+                    else if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom)) 
+                    {
+                        // If the incoming delegate came from a region tagged "defender", it's probably a defence or detag
+                        ops[region] = OpType.Defence;
                     }
                     else
                     {
-                        var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
-                        if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                            ops[region] = OpType.Defence;
-                        else
-                            ops[region] = OpType.Suspicious;
+                        // Sometimes defenders, raiders and imperialists use non-tagged regions as jump points
+                        // So any change right after moving must at least be considered suspicious
+                        ops[region] = OpType.Suspicious;
                     }
                 }
             }
@@ -118,11 +145,21 @@ namespace Console.Commands
             return ops;
         }
 
+        /// <summary> Make a readable report out of a dictionary with region-name, OpType pairs </summary>
         private string Report(Dictionary<string, OpType> ops)
         {
+            // Add date and time at the top
             var report = $"Report: {TimeUtil.Now()}\n";
-            if (ops.Count > 0)
+            
+            // If no operations
+            if (ops.Count == 0)
             {
+                report += "# === No suspicious activity found ===\n";
+            }
+            // If any operations
+            else
+            {
+                // Invasions
                 var invaded = ops.Where(p => p.Value == OpType.Invasion).ToList();
                 if (invaded.Count > 0)
                 {

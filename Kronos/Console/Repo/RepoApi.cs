@@ -18,6 +18,7 @@ namespace Console.Repo
         private List<string> taggedDefender;
         private List<string> taggedFounderless;
         private List<string> taggedInvader;
+        private  List<string> taggedImperialist;
         private List<string> taggedPassword;
 
         /// <summary> This class is a singleton </summary>
@@ -109,6 +110,14 @@ namespace Console.Repo
 
             taggedInvader = await RegionsWithTag("invader");
             return taggedInvader;
+        }
+
+        public async Task<List<string>> TaggedImperialist()
+        {
+            if (taggedImperialist != null) return taggedImperialist;
+
+            taggedImperialist = await RegionsWithTag("imperialist");
+            return taggedImperialist;
         }
 
         /// <summary> Get the names of all regions with the "defender" tag </summary>

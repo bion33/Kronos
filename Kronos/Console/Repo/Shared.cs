@@ -6,6 +6,6 @@ namespace Console.Repo
         private static string userAgent;
 
         /// <summary> User-Agent for requests to the NS server </summary>
-        public static string UserAgent => userAgent ??= RepoStorage.GetUserInfo();
+        public static string UserAgent => userAgent ??= "Application: Kronos (https://github.com/Krypton-Nova/Kronos-NET); User: " + RepoStorage.GetUserInfo();
     }
 }
