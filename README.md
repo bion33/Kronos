@@ -6,7 +6,7 @@
 #### Author
 Krypton Nova (bion@disroot.org)</br>
 
-Feel free to send me a mail if you have suggestions or concerns regarding this application. I will maintain it until 2020-07-01 before re-evaluating its usefulness. Let me know if it is useful to you :)
+Feel free to send me a mail if you have suggestions or concerns regarding this application. I will maintain it until 2024-07-01 before re-evaluating its usefulness. Let me know if it is useful to you :)
 
 
 ## PURPOSE & USE
