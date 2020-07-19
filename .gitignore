@@ -1,10 +1,6 @@
+# Specify filepatterns you want git to ignore.
 
-config.txt
-*.xml
-*.xlsx
-Kronos-*
-Kronos_*
-error-report.txt
-.idea/*
-Kronos.tar.gz
-Kronos.zip
+.idea
+Kronos/Kronos/obj
+Kronos/Kronos/bin
+Kronos/Kronos/build
