@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Console.Repo;
-using Console.UI;
-using Console.Utilities;
+using Kronos.Repo;
+using Kronos.UI;
+using Kronos.Utilities;
 
-namespace Console.Commands
+namespace Kronos.Commands
 {
     /// <summary> Command to generate a report of likely military operations during the last (major or minor) update </summary>
     public class Ops : ICommand
@@ -31,13 +30,16 @@ namespace Console.Commands
 
             // Filter out the suspicious changes from among the (supposedly) legitimate changes
             var ops = await FilterOps(delegacyChanges, updateEnd - 86400);
-            
+
+            UIConsole.Show("Saving to report... ");
+
             // Generate report
             var report = Report(ops);
 
             // Save
-            File.WriteAllText($"Kronos-Ops_{TimeUtil.DateForPath()}.md", report);
-            UIConsole.Show("Done. \n");
+            await File.WriteAllTextAsync($"Kronos-Ops_{TimeUtil.DateForPath()}.md", report);
+
+            UIConsole.Show("[done].\n");
         }
 
         /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
@@ -103,7 +105,7 @@ namespace Console.Commands
             var defenders = await RepoApi.Api.TaggedDefender();
 
             var ops = new Dictionary<string, OpType>();
-            
+
             // For each delegacy change
             for (var i = 0; i < delegacyChanges.Count; i++)
             {
@@ -111,7 +113,7 @@ namespace Console.Commands
                 var delegateName = delegacyChanges[i].newDelegate;
                 // Get the last moves made by that nation since ...
                 var delMoves = await LastMoves(delegateName, since);
-                
+
                 // If the nation moved since ...
                 if (delMoves.Count > 0)
                 {
@@ -128,22 +130,20 @@ namespace Console.Commands
                     // Determine operation type
                     if (invaders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom)
                         || imperialists.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                    {
                         // If the incoming delegate came from a region tagged "invader" or "imperialist",
                         // it's probably a tag raid or surprise invasion
                         ops[region] = OpType.Invasion;
-                    }
-                    else if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom)) 
-                    {
+                    else if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
                         // If the incoming delegate came from a region tagged "defender", it's probably a defence or detag
                         ops[region] = OpType.Defence;
-                    }
                     else
-                    {
                         // Sometimes defenders, raiders and imperialists use non-tagged regions as jump points
                         // So any change right after moving must at least be considered suspicious
                         ops[region] = OpType.Suspicious;
-                    }
+
+                    var type = ops[region] == OpType.Invasion ? "Raider" :
+                        ops[region] == OpType.Defence ? "Defender" : "Suspicious";
+                    UIConsole.Show($"* {type} activity in {region}\n");
                 }
             }
 
@@ -155,7 +155,7 @@ namespace Console.Commands
         {
             // Add date and time at the top
             var report = $"Report: {TimeUtil.Now()}\n";
-            
+
             // If no operations
             if (ops.Count == 0)
             {
@@ -175,7 +175,7 @@ namespace Console.Commands
                         report += $"* Possible raider activity in {p.Key} \n{link}\n";
                     });
                 }
-                
+
                 // Defences
                 var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
                 if (defended.Count > 0)
@@ -187,7 +187,7 @@ namespace Console.Commands
                         report += $"* Likely defence operation in {p.Key} \n{link}\n";
                     });
                 }
-                
+
                 // Other
                 var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
                 if (suspicious.Count > 0)

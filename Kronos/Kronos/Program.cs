@@ -1,7 +1,8 @@
 ﻿using System.Threading.Tasks;
-using Console.UI;
+using Kronos.Repo;
+using Kronos.UI;
 
-namespace Console
+namespace Kronos
 {
     internal static class Program
     {
@@ -10,8 +11,7 @@ namespace Console
             // Greeting
             UIConsole.Show("Kronos, at your service.\n");
 
-            // Status
-            UIConsole.Show("Starting...\n");
+            var unusedUserAgent = Shared.UserAgent;
 
             // Run until Quit command is given.
             while (true)

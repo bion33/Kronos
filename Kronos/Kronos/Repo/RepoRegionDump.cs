@@ -6,10 +6,11 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.XPath;
-using Console.Domain;
-using Console.Utilities;
+using Kronos.Domain;
+using Kronos.UI;
+using Kronos.Utilities;
 
-namespace Console.Repo
+namespace Kronos.Repo
 {
     /// <summary> NS region data from dump </summary>
     public class RepoRegionDump
@@ -37,9 +38,13 @@ namespace Console.Repo
             // If dump xml exists, skip
             if (File.Exists(dumpXml)) return;
 
+            UIConsole.Show("Getting regions dump... ");
+
             RemoveOldDumps();
             await GetDumpAsync(DumpUrl);
-            await ExtractGz(dumpGz, dumpXml);
+            await ExtractGz();
+
+            UIConsole.Show("[done].\n");
         }
 
         /// <summary> Remove outdated region dumps </summary>
@@ -47,6 +52,7 @@ namespace Console.Repo
         {
             var dir = new DirectoryInfo(".");
             foreach (var file in dir.EnumerateFiles(".Regions_*.xml")) file.Delete();
+            foreach (var file in dir.EnumerateFiles(".Regions_*.xml.gz")) file.Delete();
         }
 
         /// <summary> Download regions dump archive </summary>
@@ -61,23 +67,28 @@ namespace Console.Repo
             await using var file = new FileStream(dumpGz, FileMode.CreateNew);
             var stream = response.GetResponseStream();
             if (stream != null) await stream.CopyToAsync(file);
+
+            // Add download size
+            Shared.BytesDownloaded += response.Headers.ToByteArray().Length;
+            if (response.ContentLength > 0) Shared.BytesDownloaded += response.ContentLength;
         }
 
         /// <summary> Extract regions dump archive to XML </summary>
-        private async Task ExtractGz(string gzLocation, string outputLocation)
+        private async Task ExtractGz()
         {
             // If dump xml exists, skip
             if (File.Exists(dumpXml)) return;
 
-            // Extract
-            await using var inStream = new FileStream(gzLocation, FileMode.Open, FileAccess.Read);
-            await using var zipStream = new GZipStream(inStream, CompressionMode.Decompress);
-            await using var outStream = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
+            // Extract & save
+            await using (var inStream = new FileStream(dumpGz, FileMode.Open, FileAccess.Read))
+            {
+                await using var zipStream = new GZipStream(inStream, CompressionMode.Decompress);
+                await using var outStream = new FileStream(dumpXml, FileMode.Create, FileAccess.Write);
 
-            // Save
-            var tempBytes = new byte[4096];
-            int i;
-            while ((i = zipStream.Read(tempBytes, 0, tempBytes.Length)) != 0) outStream.Write(tempBytes, 0, i);
+                var tempBytes = new byte[4096];
+                int i;
+                while ((i = zipStream.Read(tempBytes, 0, tempBytes.Length)) != 0) outStream.Write(tempBytes, 0, i);
+            }
 
             // Delete archive
             File.Delete(dumpGz);
@@ -91,6 +102,8 @@ namespace Console.Repo
 
             // Skip if already did this before
             if (regions != null) return regions;
+
+            UIConsole.Show("Parsing regions... ");
 
             var api = RepoApi.Api;
             regions = new List<Region>();
@@ -125,6 +138,8 @@ namespace Console.Repo
             await AddMinorUpdateTimes();
             AddReadableUpdateTimes();
 
+            UIConsole.Show("[done].\n");
+
             return regions;
         }
 
@@ -137,7 +152,7 @@ namespace Console.Repo
             for (var i = 0; i < regions.Count; i++)
                 regions[i].minorUpdateTime = i == 0
                     ? regions[i].nationCount * minorTick + TimeUtil.UnixLastMinorStart()
-                    : regions[i - 1].minorUpdateTime + regions[i].nationCount * minorTick;
+                    : regions[i - 1].minorUpdateTime + regions[i - 1].nationCount * minorTick;
         }
 
         /// <summary> Calculate readable update time (as HH:MM:SS since the start of each update) </summary>

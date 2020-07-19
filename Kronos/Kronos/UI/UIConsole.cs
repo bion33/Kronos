@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Console.Commands;
+using Kronos.Commands;
 
-namespace Console.UI
+namespace Kronos.UI
 {
     /// <summary> Console user interface. This class is for interaction with the user trough the console. </summary>
     public class UIConsole
@@ -52,7 +52,7 @@ namespace Console.UI
                             break;
                         case "-k":
                         case "-kronos":
-                            commands.Add(new Kronos());
+                            commands.Add(new Commands.Kronos());
                             break;
                         case "-o":
                         case "-ops":
@@ -70,7 +70,7 @@ namespace Console.UI
                             // The options are considered incorrect if any option didn't match any of the above situations
                             correctOptions = false;
                             break;
-                    }   
+                    }
                 }
 
                 // Skip asking new options if there are given options and they are correct
@@ -95,44 +95,44 @@ namespace Console.UI
             var optionArguments = new List<string>();
             var optionIndex = options.IndexOf(option);
 
-            for (int i = optionIndex + 1; i < options.Count; i++)
+            for (var i = optionIndex + 1; i < options.Count; i++)
             {
                 // Break when reaching next option
                 if (options[i].Contains("-")) break;
-                
+
                 // If not an option, consider it an argument when this method is invoked (if not it'll be considered wrong)
                 optionArguments.Add(options[i].ToLower());
             }
-            
+
             return optionArguments;
         }
-        
+
         /// <summary> Get the user-specific part of the User-Agent to be sent with requests to NationStates </summary>
         public static string GetUserInfo()
         {
-            Show("You need to provide your nation name or email address once. This is needed to comply " +
-                 "with NS script rules. It will be saved in config.txt in this folder so that " +
-                 "you do not have to provide it again.\n");
+            Show("\nPlease provide your nation name or email address. This is needed to comply with NS " +
+                 "script rules. It will be saved in config.txt in this folder so that you do not have to provide it " +
+                 "again.\n");
             Show("User Information: ");
             return GetInput();
         }
 
-        /// <summary> Wrapper for Console.Write </summary>
+        /// <summary> Wrapper for Kronos.Write </summary>
         public static void Show(string message)
         {
-            System.Console.Write(message);
+            Console.Write(message);
         }
 
-        /// <summary> Wrapper for Console.ReadLine </summary>
+        /// <summary> Wrapper for Kronos.ReadLine </summary>
         public static string GetInput()
         {
-            return System.Console.ReadLine();
+            return Console.ReadLine();
         }
 
         /// <summary> Check if "Q" was pressed without blocking program execution </summary>
         public static bool Interrupted()
         {
-            return System.Console.KeyAvailable && System.Console.ReadKey(true).Key == ConsoleKey.Q;
+            return Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Q;
         }
     }
 }

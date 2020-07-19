@@ -1,4 +1,4 @@
-namespace Console.Domain
+namespace Kronos.Domain
 {
     /// <summary> Region data class </summary>
     public class Region

@@ -2,27 +2,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
-using Console.Domain;
-using Console.Repo;
-using Console.UI;
-using Console.Utilities;
+using Kronos.Domain;
+using Kronos.Repo;
+using Kronos.UI;
+using Kronos.Utilities;
 
-namespace Console.Commands
+namespace Kronos.Commands
 {
     /// <summary> Command to generate a sheet with update times and information for detag-able regions </summary>
     public class Detag : ICommand
     {
-        
         /// <summary> Generate a sheet with update times and information for detag-able regions </summary>
         public async Task Run()
         {
-            UIConsole.Show("Creating Detag sheet... \n");
-
             var regions = await RepoRegionDump.Dump.Regions();
+
+            UIConsole.Show("Creating Detag sheet... ");
+
             regions = Filter(regions);
             await Sheet(regions);
 
-            UIConsole.Show("Done. \n");
+            UIConsole.Show("[done].\n");
         }
 
         /// <summary>
@@ -40,12 +40,12 @@ namespace Console.Commands
         {
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("TimeSheet");
-            
+
             // Header
             var row = new List<object>
                 {"Region", "Major", "Minor", "Nations", "Endo's", "Founder", "Link", "", "World", "Data"};
             ws.AddRow(1, row);
-            
+
             var majorTime = await RepoRegionDump.Dump.MajorTook();
             var minorTime = await RepoRegionDump.Dump.MinorTook();
             var nations = await RepoRegionDump.Dump.NumNations();

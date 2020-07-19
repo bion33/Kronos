@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Console.Commands
+namespace Kronos.Commands
 {
     /// <summary> Interface for application commands </summary>
     public interface ICommand

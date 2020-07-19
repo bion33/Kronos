@@ -1,26 +1,26 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
-using Console.Domain;
-using Console.Repo;
-using Console.UI;
-using Console.Utilities;
+using Kronos.Domain;
+using Kronos.Repo;
+using Kronos.UI;
+using Kronos.Utilities;
 
-namespace Console.Commands
+namespace Kronos.Commands
 {
     /// <summary> Command to generate a sheet with update times and information for all regions </summary>
     public class Kronos : ICommand
     {
-        
         /// <summary> Generate a sheet with update times and information for all regions </summary>
         public async Task Run()
         {
-            UIConsole.Show("Creating Kronos sheet... \n");
-
             var regions = await RepoRegionDump.Dump.Regions();
+
+            UIConsole.Show("Creating Kronos sheet... ");
+
             await Sheet(regions);
 
-            UIConsole.Show("Done. \n");
+            UIConsole.Show("[done].\n");
         }
 
         /// <summary> Generate a XLSX sheet containing the relevant information </summary>
@@ -85,13 +85,13 @@ namespace Console.Commands
                 .SetBackgroundColor(XLColor.Olive);
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenStartsWith("N").Fill
                 .SetBackgroundColor(XLColor.Yellow);
-            
+
             // Add conditional colours for whether or not the WA Delegacy is executive
             ws.Range("G2", $"G{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("Y").Fill
                 .SetBackgroundColor(XLColor.DarkOrange);
             ws.Range("G2", $"G{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("N").Fill
                 .SetBackgroundColor(XLColor.Green);
-            
+
             // Add conditional colours for whether or not the region is tagged "invader"
             ws.Range("H2", $"H{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("Y").Fill
                 .SetBackgroundColor(XLColor.Red);

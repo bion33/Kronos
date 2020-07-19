@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using ClosedXML.Excel;
 
-namespace Console.Utilities
+namespace Kronos.Utilities
 {
     /// <summary> Common utilities for manipulating Xlsx files </summary>
     public static class XlsxUtil

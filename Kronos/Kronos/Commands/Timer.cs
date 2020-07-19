@@ -1,36 +1,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Console.Domain;
-using Console.Repo;
-using Console.UI;
-using Console.Utilities;
+using Kronos.Domain;
+using Kronos.Repo;
+using Kronos.UI;
+using Kronos.Utilities;
 
-namespace Console.Commands
+namespace Kronos.Commands
 {
     /// <summary> Command to show an estimated countdown to a region's next update </summary>
     public class Timer : ICommand
     {
-        private const int LastTriggerSecondsBeforeTarget = 5;
+        private const int LastTriggerSecondsBeforeTarget = 3;
+        private readonly string argument;
         private int currentTrigger = 1;
         private bool keepGoing = true;
         private bool nextUpdateIsMajor;
         private List<double> secondsPerNation;
-        private string argument;
         private Region target;
         private List<Region> triggers;
 
-        public Timer() {}
+        public Timer()
+        {
+        }
 
         public Timer(List<string> arguments)
         {
             argument = string.Join(" ", arguments);
         }
-        
+
         /// <summary> Show an estimated countdown to a region's next update </summary>
         public async Task Run()
         {
-            UIConsole.Show("Preparing region data... \n");
             var regions = await RepoRegionDump.Dump.Regions();
             var targetIndex = -1;
 
@@ -40,18 +41,19 @@ namespace Console.Commands
             // Get target region from user (ask again if given target doesn't exist)
             while (targetIndex < 0)
             {
-                UIConsole.Show("Provide no region below to quit Timer. \n\nTarget Region: ");
+                UIConsole.Show("\nTarget Region: ");
                 var t = UIConsole.GetInput();
 
                 if (t == "") return;
                 targetIndex = regions.FindIndex(r => r.name.ToLower() == t.ToLower());
                 if (targetIndex == -1) UIConsole.Show("Region name not found.\n");
             }
+
             target = regions[targetIndex];
-            
+
             // A boolean indicating if the next update is major (true) or minor (false)
             nextUpdateIsMajor = TimeUtil.UnixLastMajorStart() < TimeUtil.UnixLastMinorStart();
-            
+
             // Length of the last update in seconds
             var lastUpdateTook = nextUpdateIsMajor
                 ? await RepoRegionDump.Dump.MajorTook()
@@ -59,9 +61,9 @@ namespace Console.Commands
 
             // Select the most appropriate triggers for the target, given the length of the last update
             triggers = await Triggers(targetIndex, regions, lastUpdateTook);
-            
+
             // Show timer header
-            UIConsole.Show("Press [Q] to quit Timer.\n");
+            UIConsole.Show("Press [Q] to quit Timer.\n\n");
             UIConsole.Show($"{" Time".PadRight(9, ' ')} | {"Trigger".PadRight(7, ' ')} | Variance \n");
             UIConsole.Show($"{"".PadRight(10, '-')} {"".PadRight(9, '-')} {"".PadRight(12, '-')}\n");
 
@@ -74,14 +76,14 @@ namespace Console.Commands
                 // The first seconds-per-nation value is taken from the previous update
                 nextUpdateIsMajor ? await RepoRegionDump.Dump.MajorTick() : await RepoRegionDump.Dump.MinorTick()
             };
-            
+
             // Display the timer asynchronously so that it counts down consistently. Do not await this.
-            ShowUpdateTimer();
+            var unusedSuppressWarning = ShowUpdateTimer();
 
             // Watch the triggers and target to adjust seconds-per-nation and exit when target updates
-            await WatchTriggers();   
+            await WatchTriggers();
 
-            UIConsole.Show("\nDone.\n");
+            UIConsole.Show("\n\n");
         }
 
         /// <summary> Get the best triggers for the target, given the time (in seconds) the last update took </summary>
@@ -92,10 +94,10 @@ namespace Console.Commands
             // interval should not be static.
             var firstInterval = (int) (LastTriggerSecondsBeforeTarget * await RepoRegionDump.Dump.NumNations() /
                                        (lastUpdateTook + 0.0));
-            
+
             var triggers = new List<Region>();
             double multiplier = 1;
-            
+
             // Start with the target, then iterate down to the first region in the update order.
             //
             // The interval (amount of nations between triggers) is increased with every trigger, so that we don't get
@@ -107,16 +109,17 @@ namespace Console.Commands
             // equalling the nations on NS in total) between the last added trigger and the current region is exceeded,
             // consider the current region as a new trigger. 
             for (var i = targetIndex; i >= 0; i--)
-                if (i == targetIndex 
-                    || triggers.Last().nationCumulative - regions[i].nationCumulative > firstInterval * multiplier)
+                if (i == targetIndex
+                    || triggers.Last().nationCumulative - triggers.Last().nationCount -
+                    (regions[i].nationCumulative - regions[i].nationCount) > firstInterval * multiplier)
                 {
                     triggers.Add(regions[i]);
                     multiplier *= 1.5;
                 }
-            
+
             // Reverse the triggers, so that they go from earliest to latest
             triggers.Reverse();
-            
+
             return triggers;
         }
 
@@ -134,7 +137,7 @@ namespace Console.Commands
         private bool UpdateStarted()
         {
             var startOfThisUpdate =
-                nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart(); 
+                nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
             return TimeUtil.UnixNow() > startOfThisUpdate;
         }
 
@@ -142,7 +145,7 @@ namespace Console.Commands
         private double NextUpdateFor(Region region, double averageSecondsPerNation)
         {
             var nextUpdate = nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
-            return nextUpdate + averageSecondsPerNation * region.nationCumulative;
+            return nextUpdate + averageSecondsPerNation * (region.nationCumulative - region.nationCount);
         }
 
         /// <summary>
@@ -155,16 +158,19 @@ namespace Console.Commands
             while (keepGoing)
             {
                 var currentSecondsPerNation = secondsPerNation.Last();
-                var lastSecondsPerNation = secondsPerNation.Count > 1 ? secondsPerNation[secondsPerNation.Count - 2] : currentSecondsPerNation;
-                var variance = currentSecondsPerNation * target.nationCumulative - lastSecondsPerNation * target.nationCumulative;
+                var lastSecondsPerNation = secondsPerNation.Count > 1
+                    ? secondsPerNation[secondsPerNation.Count - 2]
+                    : currentSecondsPerNation;
+                var variance = currentSecondsPerNation * (target.nationCumulative - target.nationCount) -
+                               lastSecondsPerNation * (target.nationCumulative - target.nationCount);
                 var timeToUpdate = NextUpdateFor(target, currentSecondsPerNation) - TimeUtil.UnixNow();
-                
+
                 // The trigger we're using right now
                 var trigger = currentTrigger.ToString().PadLeft(3, ' ');
                 // The total amount of triggers - 1, to remove the target region itself
                 // Might be confusing to the user otherwise why the trigger counter never gets to the last trigger
-                var relevantTriggers = (triggers.Count - 1).ToString().PadRight(3, ' ');    
-                
+                var relevantTriggers = (triggers.Count - 1).ToString().PadRight(3, ' ');
+
                 // Output line string
                 var str = $"{TimeUtil.ToHms(timeToUpdate)} | {trigger}/{relevantTriggers} | {variance:0.} s";
 
@@ -175,7 +181,7 @@ namespace Console.Commands
 
                 // Check if user wants to interrupt
                 keepGoing = !UIConsole.Interrupted();
-                
+
                 // Chill, no need to get a hot CPU
                 await Task.Delay(250);
             }
@@ -191,39 +197,68 @@ namespace Console.Commands
             while (keepGoing)
             {
                 // Update has not yet started, skip
-                if (! UpdateStarted())
+                if (!UpdateStarted())
                 {
                     await Task.Delay(1000);
                     continue;
                 }
-                
+
+                // If target already updated, break
+                if (await Updated(target))
+                {
+                    keepGoing = false;
+                    break;
+                }
+
+                // Go backwards trough the list of triggers until we encounter the first one which is yet to update to
+                // save requests (and thus time).
+                var startTrigger = 0;
+                for (var i = triggers.Count - 2; i >= 0; i--)
+                {
+                    if (!await Updated(triggers[i])) continue;
+
+                    startTrigger = i;
+                    await SecsPerNation(triggers[i]);
+                    break;
+                }
+
                 // Update has started
                 // For each trigger while user has not interrupted and target has not yet updated
-                for (var i = 0; i < triggers.Count && keepGoing; i++)
+                for (var i = startTrigger; i < triggers.Count && keepGoing; i++)
                 {
                     var trigger = triggers[i];
-                
+                    currentTrigger = i;
+
                     // Wait until trigger updates or user interrupts
                     while (!await Updated(trigger) && keepGoing)
                     {
                     }
-                
-                    // Recalculate seconds per nation based upon the time this trigger updated
-                    var newUpdate = await RepoApi.Api.LastUpdateFor(trigger.name);
-                    var updateStart = nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
-                    var newSecondsPerNation = (newUpdate - updateStart) / trigger.nationCumulative;
-                    secondsPerNation.Add(newSecondsPerNation);
-                
-                    // Update "currentTrigger" so that ShowUpdateTimer knows at which trigger we are
-                    currentTrigger = i + 1;
+
+                    await SecsPerNation(trigger);
                 }
-                
+
                 // If the for loop exited because the target updated, keepGoing must be set to false
                 keepGoing = false;
             }
-            
+
             // Show target updated message if this is the case
-            if (await Updated(target)) UIConsole.Show("\nTarget updated.");
+            if (await Updated(target))
+            {
+                UIConsole.Show("\nTarget updated.");
+                await Task.Delay(500);
+            }
+        }
+
+        /// <summary>
+        ///     Recalculate seconds per nation based upon the last time the given trigger updated. This method makes an
+        ///     API request to get said last time, so use this method sparsely.
+        /// </summary>
+        private async Task SecsPerNation(Region trigger)
+        {
+            var newUpdate = await RepoApi.Api.LastUpdateFor(trigger.name);
+            var updateStart = nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
+            var newSecondsPerNation = (newUpdate - updateStart) / (trigger.nationCumulative - trigger.nationCount);
+            secondsPerNation.Add(newSecondsPerNation);
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Console.Utilities
+namespace Kronos.Utilities
 {
     /// <summary> Common utilities for manipulating strings </summary>
     public static class TextUtil

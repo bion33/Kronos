@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Console.Utilities;
+using Kronos.Utilities;
 
-namespace Console.Repo
+namespace Kronos.Repo
 {
     /// <summary> Get data from the NS API </summary>
     public class RepoApi
@@ -17,8 +17,8 @@ namespace Console.Repo
         private int numNations;
         private List<string> taggedDefender;
         private List<string> taggedFounderless;
+        private List<string> taggedImperialist;
         private List<string> taggedInvader;
-        private  List<string> taggedImperialist;
         private List<string> taggedPassword;
 
         /// <summary> This class is a singleton </summary>
@@ -45,12 +45,16 @@ namespace Console.Repo
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             using var response = (HttpWebResponse) await request.GetResponseAsync();
 
+            // Add download size
+            Shared.BytesDownloaded += response.Headers.ToByteArray().Length;
+            if (response.ContentLength > 0) Shared.BytesDownloaded += response.ContentLength;
+
             // Dequeue
             queue.Dequeue();
             lastRequest = DateTime.Now;
 
             // Logging
-            // System.Console.WriteLine($"Request @ {DateTime.Now}: {response.StatusCode}");
+            // System.Kronos.WriteLine($"Request @ {DateTime.Now}: {response.StatusCode}");
 
             // Return data
             await using var stream = response.GetResponseStream() ??

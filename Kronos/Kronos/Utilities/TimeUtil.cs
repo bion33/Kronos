@@ -1,11 +1,10 @@
 using System;
 using TimeZoneConverter;
 
-namespace Console.Utilities
+namespace Kronos.Utilities
 {
     /// <summary>
     ///     Common utilities for working with time, timezones and (calculated) timestamps.
-    ///
     ///     Note:
     ///     It is preferable to work in this timezone, because updates happen at a fixed offset from the start of the
     ///     day (in this timezone). The server respects DST changes, making calculating offsets in UTC or local
