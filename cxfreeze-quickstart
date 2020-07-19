@@ -1,5 +1,0 @@
-#!C:\ProgLang\Python-3.6\python.exe
-from cx_Freeze.setupwriter import main
-
-main()
-
