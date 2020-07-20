@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.0.0 (2020-07-19)
+### Latest release: v3.1.0 (2020-07-20)
 
 
 #### Author
@@ -15,12 +15,12 @@ Kronos was made in .NET, and runs in the command line. In windows you can double
 
 Kronos runs the options in the same order you gave them.
 
-Syntax:  ./Kronos [-d] [-k] [-o] [-t [region name]] [-q] </br>
+Syntax:  ./Kronos [-d] [-s] [-o] [-t [region name]] [-q] </br>
 
 -d, -detag  </br>
-* Similar to -kronos, but will limit output to detag-able regions.
+* Similar to -sheet, but will limit output to detag-able regions.
 
--k, -kronos  </br>
+-s, -sheet  </br>
 * Provides a sheet with the update time of every region. It will provide some additional useful information such as the amount of nations in a region, information on the delegate and founder, information on password status, and a link to the region in question. It only needs to be used once a day.
 
 -o, -ops  </br>
@@ -58,6 +58,11 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 
 ## CHANGELOG
+
+#### v3.1.0 (2020-07-20)
+
+* Split solution into library and console application so that library can be used in other projects.
+* Renamed the "kronos" option to "sheet", so I can stop confusing everyone for legacy reasons.
 
 #### v3.0.0 (2020-07-19)
 
