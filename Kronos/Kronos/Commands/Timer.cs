@@ -157,22 +157,14 @@ namespace Kronos.Commands
             // While the user has not interrupted the timer, and the target has not yet updated.
             while (keepGoing)
             {
-                var currentSecondsPerNation = secondsPerNation.Last();
-                var lastSecondsPerNation = secondsPerNation.Count > 1
-                    ? secondsPerNation[secondsPerNation.Count - 2]
-                    : currentSecondsPerNation;
-                var variance = currentSecondsPerNation * (target.nationCumulative - target.nationCount) -
-                               lastSecondsPerNation * (target.nationCumulative - target.nationCount);
-                var timeToUpdate = NextUpdateFor(target, currentSecondsPerNation) - TimeUtil.UnixNow();
-
                 // The trigger we're using right now
-                var trigger = currentTrigger.ToString().PadLeft(3, ' ');
+                var trigger = CurrentTrigger.ToString().PadLeft(3, ' ');
                 // The total amount of triggers - 1, to remove the target region itself
                 // Might be confusing to the user otherwise why the trigger counter never gets to the last trigger
-                var relevantTriggers = (triggers.Count - 1).ToString().PadRight(3, ' ');
+                var relevantTriggers = TotalTriggers.ToString().PadRight(3, ' ');
 
                 // Output line string
-                var str = $"{TimeUtil.ToHms(timeToUpdate)} | {trigger}/{relevantTriggers} | {variance:0.} s";
+                var str = $"{TimeUtil.ToHms(CurrentTimeToUpdate())} | {trigger}/{relevantTriggers} | {CurrentVariance():0.} s";
 
                 // Clear previous output line
                 UIConsole.Show("\r".PadRight(str.Length * 2, ' '));
@@ -260,5 +252,29 @@ namespace Kronos.Commands
             var newSecondsPerNation = (newUpdate - updateStart) / (trigger.nationCumulative - trigger.nationCount);
             secondsPerNation.Add(newSecondsPerNation);
         }
+
+        /// <summary> The current estimated time in seconds until the target region updates </summary>
+        public double CurrentTimeToUpdate()
+        {
+            var currentSecondsPerNation = secondsPerNation.Last();
+            return NextUpdateFor(target, currentSecondsPerNation) - TimeUtil.UnixNow();
+        }
+
+        /// <summary> The difference between the current estimated update time and the previous, in seconds </summary>
+        public double CurrentVariance()
+        {
+            var currentSecondsPerNation = secondsPerNation.Last();
+            var lastSecondsPerNation = secondsPerNation.Count > 1
+                ? secondsPerNation[^2]
+                : currentSecondsPerNation;
+            return currentSecondsPerNation * (target.nationCumulative - target.nationCount) - lastSecondsPerNation * 
+                (target.nationCumulative - target.nationCount);
+        }
+
+        /// <summary> The trigger which is currently being watched until it updates </summary>
+        public int CurrentTrigger => currentTrigger;
+
+        /// <summary> The total amount of triggers before the target region updates </summary>
+        public int TotalTriggers => triggers.Count - 1;    // The target region is the last "trigger"
     }
 }
