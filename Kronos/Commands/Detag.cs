@@ -96,7 +96,9 @@ namespace Kronos.Commands
                 .SetBackgroundColor(XLColor.Red);
 
             // Save
-            wb.SaveAs($"Kronos-Detag_{TimeUtil.DateForPath()}.xlsx");
+            var date = TimeUtil.DateForPath();
+            System.IO.Directory.CreateDirectory(date);
+            wb.SaveAs($"{date}/Kronos-Detag_{date}.xlsx");
         }
     }
 }

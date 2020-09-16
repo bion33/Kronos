@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.1.0 (2020-07-20)
+### Latest release: v3.2.0 (2020-09-16)
 
 
 #### Author
@@ -11,7 +11,7 @@ Feel free to send me a mail if you have suggestions or concerns regarding this a
 
 ## PURPOSE & USE
 
-Kronos was made in .NET, and runs in the command line. In windows you can double-click "Kronos.exe" to use it, or run it using CMD or PowerShell. On Linux you can run Kronos from the terminal. The brackets around an option mean it is optional. You shouldn't type the brackets.
+Kronos was made in .NET, and runs in the command line. In windows you can double-click "Kronos-Console.exe" to use it, or run it using CMD or PowerShell. On Linux you can run Kronos from the terminal with "./Kronos-Console". The brackets around an option mean it is optional, you shouldn't type them.
 
 Kronos runs the options in the same order you gave them.
 
@@ -58,6 +58,12 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 
 ## CHANGELOG
+
+#### v3.2.0 (2020-09-16)
+
+* Make Kronos store generated sheets & reports in dated folders to prevent file clutter (user request)
+* Add a region's update time to operation reports (user request). This time is the same as when the delegate came to power, so I noted it with an "at" (@) sign
+* Tell the user when a new release of Kronos is available. Kronos relies on the README.md file to know its current version, so don't delete it
 
 #### v3.1.0 (2020-07-20)
 

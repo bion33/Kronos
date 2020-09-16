@@ -105,7 +105,9 @@ namespace Kronos.Commands
                 .SetBackgroundColor(XLColor.Green);
 
             // Save
-            wb.SaveAs($"Kronos-TimeSheet_{TimeUtil.DateForPath()}.xlsx");
+            var date = TimeUtil.DateForPath();
+            System.IO.Directory.CreateDirectory(date);
+            wb.SaveAs($"{date}/Kronos-TimeSheet_{date}.xlsx");
         }
     }
 }

@@ -42,7 +42,9 @@ namespace Kronos.Commands
             var report = Report(ops);
 
             // Save
-            await File.WriteAllTextAsync($"Kronos-Ops_{TimeUtil.DateForPath()}.md", report);
+            var date = TimeUtil.DateForPath();
+            System.IO.Directory.CreateDirectory(date);
+            await File.WriteAllTextAsync($"{date}/Kronos-Ops_{date}.md", report);
 
             if (interactiveLog) Console.Write("[done].\n");
         }
@@ -101,7 +103,7 @@ namespace Kronos.Commands
         ///     defences and sieges which happen over the course of multiple days.
         /// </summary>
         /// <returns> A dictionary with region-name, OpType pairs </returns>
-        private async Task<Dictionary<string, OpType>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
+        private async Task<List<DelegacyChange>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
             bool interactiveLog = false)
         {
             // Get regions with tag
@@ -109,13 +111,15 @@ namespace Kronos.Commands
             var imperialists = await api.TaggedImperialist();
             var defenders = await api.TaggedDefender();
 
-            var ops = new Dictionary<string, OpType>();
+            var ops = new List<DelegacyChange>();
 
             // For each delegacy change
-            for (var i = 0; i < delegacyChanges.Count; i++)
+            foreach (var c in delegacyChanges)
             {
+                var change = c;
+                
                 // Delegate nation name
-                var delegateName = delegacyChanges[i].newDelegate;
+                var delegateName = change.newDelegate;
                 // Get the last moves made by that nation since ...
                 var delMoves = await LastMoves(delegateName, since);
 
@@ -124,12 +128,12 @@ namespace Kronos.Commands
                 {
                     // Get the move right before becoming delegate
                     var moveBeforeBecomingWaD =
-                        MoveBeforeBecomingDelegate(delMoves, delegacyChanges[i].changeTimeStamp);
+                        MoveBeforeBecomingDelegate(delMoves, change.changeTimeStamp);
 
                     // Skip change if nation didn't move before becoming delegate (it might have moved after)
                     if (moveBeforeBecomingWaD == null) continue;
 
-                    var region = TextUtil.ToTitleCase(delegacyChanges[i].region.Replace("_", " "));
+                    change.region = TextUtil.ToTitleCase(change.region.Replace("_", " "));
                     var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
 
                     // Determine operation type
@@ -137,20 +141,24 @@ namespace Kronos.Commands
                         || imperialists.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
                         // If the incoming delegate came from a region tagged "invader" or "imperialist",
                         // it's probably a tag raid or surprise invasion
-                        ops[region] = OpType.Invasion;
+                        change.opType = OpType.Invasion; 
                     else if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
                         // If the incoming delegate came from a region tagged "defender", it's probably a defence or detag
-                        ops[region] = OpType.Defence;
+                        change.opType = OpType.Defence;
                     else
                         // Sometimes defenders, raiders and imperialists use non-tagged regions as jump points
                         // So any change right after moving must at least be considered suspicious
-                        ops[region] = OpType.Suspicious;
-
+                        change.opType = OpType.Suspicious;
+                    
+                    // Add change to operations
+                    ops.Add(change);
+                    
                     if (interactiveLog)
                     {
-                        var type = ops[region] == OpType.Invasion ? "Raider" :
-                            ops[region] == OpType.Defence ? "Defender" : "Suspicious";
-                        Console.Write($"* {type} activity in {region}\n");
+                        var type = change.opType == OpType.Invasion ? "Raider"
+                            : change.opType == OpType.Defence ? "Defender" 
+                            : "Suspicious";
+                        Console.Write($"* {type} activity in {change.region}\n");
                     }
                 }
             }
@@ -159,7 +167,7 @@ namespace Kronos.Commands
         }
 
         /// <summary> Make a readable report out of a dictionary with region-name, OpType pairs </summary>
-        private string Report(Dictionary<string, OpType> ops)
+        private string Report(List<DelegacyChange> ops)
         {
             // Add date and time at the top
             var report = $"Report: {TimeUtil.Now()}\n";
@@ -173,38 +181,38 @@ namespace Kronos.Commands
             else
             {
                 // Invasions
-                var invaded = ops.Where(p => p.Value == OpType.Invasion).ToList();
+                var invaded = ops.Where(p => p.opType == OpType.Invasion).ToList();
                 if (invaded.Count > 0)
                 {
-                    report += $"\n# === {invaded.Count} Possible Raider Activity === \n";
+                    report += $"\n# === {invaded.Count} Possible Raider Activities === \n";
                     invaded.ForEach(p =>
                     {
-                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
-                        report += $"* Possible raider activity in {p.Key} \n{link}\n";
+                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
+                        report += $"* Possible raider activity in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
                     });
                 }
 
                 // Defences
-                var defended = ops.Where(p => p.Value == OpType.Defence).ToList();
+                var defended = ops.Where(p => p.opType == OpType.Defence).ToList();
                 if (defended.Count > 0)
                 {
                     report += $"\n# === {defended.Count} Likely Defence Operations === \n";
                     defended.ForEach(p =>
                     {
-                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
-                        report += $"* Likely defence operation in {p.Key} \n{link}\n";
+                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
+                        report += $"* Likely defence operation in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
                     });
                 }
 
                 // Other
-                var suspicious = ops.Where(p => p.Value == OpType.Suspicious).ToList();
+                var suspicious = ops.Where(p => p.opType == OpType.Suspicious).ToList();
                 if (suspicious.Count > 0)
                 {
                     report += $"\n# === {suspicious.Count} Suspicious Delegacy Changes === \n";
                     suspicious.ForEach(p =>
                     {
-                        var link = $"https://www.nationstates.net/region={p.Key.ToLower().Replace(" ", "_")}";
-                        report += $"* Suspicious delegacy change in {p.Key} \n{link}\n";
+                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
+                        report += $"* Suspicious delegacy change in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
                     });
                 }
             }
@@ -218,6 +226,7 @@ namespace Kronos.Commands
             public string region;
             public string newDelegate;
             public int changeTimeStamp;
+            public OpType opType;
         }
 
         /// <summary> Enum for categorising operations </summary>
