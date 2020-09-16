@@ -36,7 +36,7 @@ namespace Kronos.Commands
             dump = RepoRegionDump.Dump(userAgent);
             api = RepoApi.Api(userAgent);
 
-            var regions = await RepoRegionDump.Dump(userAgent).Regions();
+            var regions = await RepoRegionDump.Dump(userAgent).Regions(interactiveLog);
             var targetIndex = -1;
 
             // Get target region from argument if it was provided

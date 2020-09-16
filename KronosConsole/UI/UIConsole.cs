@@ -10,7 +10,7 @@ namespace KronosConsole.UI
     {
         private const string HelpText = "\nKronos Quick Help\n" +
                                         "\n" +
-                                        "    Syntax: Kronos [-d] [-k] [-o] [-t region name] [-q]\n" +
+                                        "    Syntax: Kronos [-d] [-s] [-o] [-t region name] [-q]\n" +
                                         "\n" +
                                         "Options:\n" +
                                         "  -d, -detag:   an update sheet limited to detag-able regions.\n" +

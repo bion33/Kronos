@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.2.0 (2020-09-16)
+### Latest release: v3.2.1 (2020-09-16)
 
 
 #### Author
@@ -58,6 +58,11 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 
 ## CHANGELOG
+
+#### v3.2.1 (2020-09-16)
+
+* Timer now tells you when it's waiting for region parsing
+* Typo
 
 #### v3.2.0 (2020-09-16)
 

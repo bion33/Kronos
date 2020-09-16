@@ -25,7 +25,7 @@ namespace KronosConsole.Commands
         /// <summary> Show an estimated countdown to a region's next update </summary>
         public async Task Run()
         {
-            var regions = await RepoRegionDump.Dump(Shared.UserAgent).Regions();
+            var regions = await RepoRegionDump.Dump(Shared.UserAgent).Regions(interactiveLog: true);
             var targetIndex = -1;
 
             // Get target region from argument if it was provided
