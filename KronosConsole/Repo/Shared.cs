@@ -7,6 +7,6 @@ namespace KronosConsole.Repo
 
         /// <summary> User-Agent for requests to the NS server </summary>
         public static string UserAgent => userAgent ??=
-            "Application: Kronos (https://github.com/Krypton-Nova/Kronos-NET); User: " + RepoStorage.GetUserInfo();
+            "Application: Kronos (https://github.com/Krypton-Nova/Kronos); User: " + RepoStorage.GetUserInfo();
     }
 }

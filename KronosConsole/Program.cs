@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using KronosConsole.Repo;
@@ -9,6 +8,8 @@ namespace KronosConsole
 {
     internal static class Program
     {
+        
+        /// <summary> Entry point for the console application </summary>
         private static async Task Main(string[] args)
         {
             var version = GetVersion();
@@ -35,6 +36,7 @@ namespace KronosConsole
             }
         }
 
+        /// <summary> Get this version of Kronos from the README.md file </summary>
         private static string GetVersion()
         {
             try
@@ -53,6 +55,7 @@ namespace KronosConsole
             return "ERROR: Couldn't get current version from README.md!";
         }
 
+        /// <summary> Get the latest version of Kronos from the README.md file in the repository </summary>
         private static string LatestUpdate()
         {
             var response = new WebClient().DownloadString("https://raw.githubusercontent.com/Krypton-Nova/Kronos/master/README.md");

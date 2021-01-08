@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.2.1 (2020-09-16)
+### Latest release: v3.2.2 (2021-01-08)
 
 
 #### Author
@@ -58,6 +58,10 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 
 ## CHANGELOG
+
+#### v3.2.2 (2021-01-08)
+
+* Critical: Replace dead repository link in user-agent
 
 #### v3.2.1 (2020-09-16)
 
