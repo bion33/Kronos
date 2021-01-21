@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using Kronos.Repo;
 using Kronos.Utilities;
@@ -37,18 +38,31 @@ namespace KronosConsole.Commands
                 UIConsole.Show("\nTarget Region: ");
                 var t = UIConsole.GetInput();
 
+                if(t.StartsWith("https://www.nationstates.net/region="))
+                {
+                    t = t["https://www.nationstates.net/region=".Length..];
+                }
+                if (t.Contains("_"))
+                {
+                    t = FromID(t);
+                }
+
                 if (t == "") return;
                 targetIndex = regions.FindIndex(r => r.name.ToLower() == t.ToLower());
                 if (targetIndex == -1) UIConsole.Show("Region name not found.\n");
             }
 
             timer = new Kronos.Commands.Timer(regions[targetIndex].name);
-            var unusedNoAwait = timer.Run(Shared.UserAgent, true);
+            
+#pragma warning disable CS4014 
+            timer.Run(Shared.UserAgent, true);
+#pragma warning restore CS4014
 
             // Show timer header
             UIConsole.Show("Press [Q] to quit Timer.\n\n");
             UIConsole.Show($"{" Time".PadRight(9, ' ')} | {"Trigger".PadRight(7, ' ')} | Variance \n");
             UIConsole.Show($"{"".PadRight(10, '-')} {"".PadRight(9, '-')} {"".PadRight(12, '-')}\n");
+
 
             // Display the timer asynchronously so that it counts down consistently.
             await ShowUpdateTimer();
@@ -89,6 +103,11 @@ namespace KronosConsole.Commands
                 // Chill, no need to get a hot CPU
                 await Task.Delay(250);
             }
+        }
+
+        public static string FromID(string text)
+        {
+            return text?.Trim().ToLower(CultureInfo.InvariantCulture).Replace('_', ' ');
         }
     }
 }
