@@ -26,7 +26,7 @@ namespace KronosConsole.Commands
         /// <summary> Show an estimated countdown to a region's next update </summary>
         public async Task Run()
         {
-            var regions = await RepoRegionDump.Dump(Shared.UserAgent).Regions(interactiveLog: true);
+            var regions = await RepoRegionDump.Dump(Shared.UserAgent).Regions(true);
             var targetIndex = -1;
 
             // Get target region from argument if it was provided
@@ -53,6 +53,7 @@ namespace KronosConsole.Commands
             }
 
             timer = new Kronos.Commands.Timer(regions[targetIndex].name);
+            
 #pragma warning disable CS4014 
             timer.Run(Shared.UserAgent, true);
 #pragma warning restore CS4014
@@ -62,6 +63,8 @@ namespace KronosConsole.Commands
             UIConsole.Show($"{" Time".PadRight(9, ' ')} | {"Trigger".PadRight(7, ' ')} | Variance \n");
             UIConsole.Show($"{"".PadRight(10, '-')} {"".PadRight(9, '-')} {"".PadRight(12, '-')}\n");
 
+
+            // Display the timer asynchronously so that it counts down consistently.
             await ShowUpdateTimer();
 
             // Tell timer to stop, if still running (in case user interrupted)

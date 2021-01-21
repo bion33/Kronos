@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using KronosConsole.Repo;
-using KronosConsole.UI;
 
 namespace KronosConsole.Commands
 {

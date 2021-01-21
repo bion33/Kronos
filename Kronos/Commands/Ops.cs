@@ -19,6 +19,12 @@ namespace Kronos.Commands
         /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
         public async Task Run(string userAgent, bool interactiveLog = false)
         {
+            await Run(userAgent, new Dictionary<string, string>(), interactiveLog);
+        }
+
+        /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
+        public async Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false)
+        {
             Console.Write("Compiling operations report... \n");
 
             api = RepoApi.Api(userAgent);
@@ -34,16 +40,17 @@ namespace Kronos.Commands
             var delegacyChanges = DelegacyChanges(delegateChangeHappenings);
 
             // Filter out the suspicious changes from among the (supposedly) legitimate changes
-            var ops = await FilterOps(delegacyChanges, updateEnd - 86400, interactiveLog);
+            var ops = await FilterOps(delegacyChanges, updateEnd - 43200, userTags, userAgent, interactiveLog);
 
             if (interactiveLog) Console.Write("Saving to report... ");
 
             // Generate report
+            ops = ops.OrderBy(o => o.changeTimeStamp).ToList();
             var report = Report(ops);
 
             // Save
             var date = TimeUtil.DateForPath();
-            System.IO.Directory.CreateDirectory(date);
+            Directory.CreateDirectory(date);
             await File.WriteAllTextAsync($"{date}/Kronos-Ops_{date}.md", report);
 
             if (interactiveLog) Console.Write("[done].\n");
@@ -104,12 +111,13 @@ namespace Kronos.Commands
         /// </summary>
         /// <returns> A dictionary with region-name, OpType pairs </returns>
         private async Task<List<DelegacyChange>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
-            bool interactiveLog = false)
+            Dictionary<string, string> userTags, string userAgent, bool interactiveLog = false)
         {
             // Get regions with tag
             var invaders = await api.TaggedInvader();
             var imperialists = await api.TaggedImperialist();
             var defenders = await api.TaggedDefender();
+            var independents = await api.TaggedIndependent();
 
             var ops = new List<DelegacyChange>();
 
@@ -117,7 +125,7 @@ namespace Kronos.Commands
             foreach (var c in delegacyChanges)
             {
                 var change = c;
-                
+
                 // Delegate nation name
                 var delegateName = change.newDelegate;
                 // Get the last moves made by that nation since ...
@@ -137,33 +145,78 @@ namespace Kronos.Commands
                     var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
 
                     // Determine operation type
-                    if (invaders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom)
-                        || imperialists.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                        // If the incoming delegate came from a region tagged "invader" or "imperialist",
-                        // it's probably a tag raid or surprise invasion
-                        change.opType = OpType.Invasion; 
-                    else if (defenders.Any(x => x.ToLower().Replace(" ", "_") == movedFrom))
-                        // If the incoming delegate came from a region tagged "defender", it's probably a defence or detag
-                        change.opType = OpType.Defence;
-                    else
-                        // Sometimes defenders, raiders and imperialists use non-tagged regions as jump points
-                        // So any change right after moving must at least be considered suspicious
-                        change.opType = OpType.Suspicious;
-                    
+                    change.opType = OpTypeFromOrigin(movedFrom, invaders, imperialists, defenders, independents,
+                        userTags);
+                    if (change.opType == OpType.Suspicious)
+                        change.opType = await OpTypeFromEmbassies(change.region, userTags, userAgent);
+
                     // Add change to operations
                     ops.Add(change);
-                    
+
                     if (interactiveLog)
                     {
-                        var type = change.opType == OpType.Invasion ? "Raider"
-                            : change.opType == OpType.Defence ? "Defender" 
-                            : "Suspicious";
+                        var type = change.opType.ToString();
                         Console.Write($"* {type} activity in {change.region}\n");
                     }
                 }
             }
 
             return ops;
+        }
+
+        /// <summary>
+        ///     Based on the given origin region, determine what kind of operation it was
+        /// </summary>
+        private OpType OpTypeFromOrigin(string region, List<string> invaders, List<string> imperialists,
+            List<string> defenders, List<string> independents, Dictionary<string, string> userTags)
+        {
+            // If the incoming delegate came from a region the user gave priority, set it aside 
+            if (userTags.Any(kv => kv.Key == region && kv.Value == "PriorityRegions")) return OpType.Priority;
+
+            // If the incoming delegate came from a region tagged "invader" or "imperialist", it's probably a
+            // tag raid or surprise invasion
+            if (invaders.Any(x => x.ToLower().Replace(" ", "_") == region)
+                || imperialists.Any(x => x.ToLower().Replace(" ", "_") == region)
+                || userTags.Any(kv => kv.Key == region && kv.Value == "RaiderRegions"))
+                return OpType.Raider;
+
+            // If the incoming delegate came from a region tagged "defender", it's probably a defence or detag
+            if (defenders.Any(x => x.ToLower().Replace(" ", "_") == region)
+                || userTags.Any(kv => kv.Key == region && kv.Value == "DefenderRegions"))
+                return OpType.Defender;
+
+            // If the incoming delegate came from a region tagged "independent", it could be anything
+            if (independents.Any(x => x.ToLower().Replace(" ", "_") == region)
+                || userTags.Any(kv => kv.Key == region && kv.Value == "IndependentRegions"))
+                return OpType.Independent;
+
+            // Sometimes GP-ers use non-tagged regions as jump points, so any change right after moving must at
+            // least be considered suspicious
+            return OpType.Suspicious;
+        }
+
+        /// <summary>
+        ///     Based on the region's embassies, determine what kind of operation it was
+        /// </summary>
+        private async Task<OpType> OpTypeFromEmbassies(string region, Dictionary<string, string> userTags,
+            string userAgent)
+        {
+            // Get region's embassies
+            var embassies = await RepoApi.Api(userAgent).EmbassiesOf(region);
+
+            // If any pending embassy is in userTags, use it's corresponding tag to define the opType
+            foreach (var pair in userTags)
+                if (embassies.Any(e => e.Value == "pending" && e.Key.ToLower().Replace(" ", "_") == pair.Key))
+                    switch (pair.Value)
+                    {
+                        case "PriorityRegions": return OpType.Priority;
+                        case "RaiderRegions": return OpType.Raider;
+                        case "IndependentRegions": return OpType.Independent;
+                        case "DefenderRegions": return OpType.Defender;
+                    }
+
+            // Default
+            return OpType.Suspicious;
         }
 
         /// <summary> Make a readable report out of a dictionary with region-name, OpType pairs </summary>
@@ -175,49 +228,43 @@ namespace Kronos.Commands
             // If no operations
             if (ops.Count == 0)
             {
-                report += "\n# === No suspicious activity found ===\n";
+                report += "\n# === No military activity found ===\n";
             }
             // If any operations
             else
             {
-                // Invasions
-                var invaded = ops.Where(p => p.opType == OpType.Invasion).ToList();
-                if (invaded.Count > 0)
-                {
-                    report += $"\n# === {invaded.Count} Possible Raider Activities === \n";
-                    invaded.ForEach(p =>
-                    {
-                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
-                        report += $"* Possible raider activity in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
-                    });
-                }
-
-                // Defences
-                var defended = ops.Where(p => p.opType == OpType.Defence).ToList();
-                if (defended.Count > 0)
-                {
-                    report += $"\n# === {defended.Count} Likely Defence Operations === \n";
-                    defended.ForEach(p =>
-                    {
-                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
-                        report += $"* Likely defence operation in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
-                    });
-                }
-
-                // Other
-                var suspicious = ops.Where(p => p.opType == OpType.Suspicious).ToList();
-                if (suspicious.Count > 0)
-                {
-                    report += $"\n# === {suspicious.Count} Suspicious Delegacy Changes === \n";
-                    suspicious.ForEach(p =>
-                    {
-                        var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
-                        report += $"* Suspicious delegacy change in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
-                    });
-                }
+                report += ReportSection(ops, OpType.Priority);
+                report += ReportSection(ops, OpType.Raider);
+                report += ReportSection(ops, OpType.Independent);
+                report += ReportSection(ops, OpType.Defender);
+                report += ReportSection(ops, OpType.Suspicious, "Suspicious", "Change");
             }
 
             return report;
+        }
+
+        /// <summary>
+        ///     Create a section of the report from the given operations, for the specified OpType, where opTypeName
+        ///     is used in the section's title and opSynonym can be used to use different terminology from the default
+        ///     "Operation".
+        /// </summary>
+        private string ReportSection(List<DelegacyChange> ops, OpType opType, string opTypeName = null,
+            string opSynonym = "Operation")
+        {
+            opTypeName ??= opType.ToString();
+            var section = "";
+            var group = ops.Where(p => p.opType == opType).ToList();
+            if (group.Count > 0)
+            {
+                section += $"\n# === {group.Count} {opTypeName} {opSynonym}s === \n";
+                group.ForEach(p =>
+                {
+                    var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
+                    section += $"* {opSynonym} in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
+                });
+            }
+
+            return section;
         }
 
         /// <summary> DTO for delegacy change happenings </summary>
@@ -232,9 +279,11 @@ namespace Kronos.Commands
         /// <summary> Enum for categorising operations </summary>
         private enum OpType
         {
-            Defence,
-            Suspicious,
-            Invasion
+            Raider,
+            Independent,
+            Defender,
+            Priority,
+            Suspicious
         }
     }
 }
