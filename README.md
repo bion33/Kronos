@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.2.2 (2021-01-08)
+### Latest release: v3.2.3 (2021-01-21)
 
 
 #### Author
@@ -58,6 +58,11 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 
 ## CHANGELOG
+
+#### v3.2.3 (2021-01-21)
+
+* Timer: Allow region to be specified as link or as id.
+* Added Windows build script
 
 #### v3.2.2 (2021-01-08)
 
