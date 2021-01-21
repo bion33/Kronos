@@ -19,6 +19,7 @@ namespace Kronos.Repo
         private List<string> taggedDefender;
         private List<string> taggedFounderless;
         private List<string> taggedImperialist;
+        private List<string> taggedIndependent;
         private List<string> taggedInvader;
         private List<string> taggedPassword;
 
@@ -74,21 +75,23 @@ namespace Kronos.Repo
             var waHappenings = new List<string>();
             var more = true;
             var i = 1;
+            var increment = 900;
 
-            // Run while more delegate changes are found
-            while (more)
+            // Run while more delegate changes are found, and less than 4 hours after start
+            while (more && i * increment < 14400)
             {
                 more = false;
 
                 // Get (<= 200) happenings
                 var url =
-                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;filter=member;sincetime={start};beforetime={start + i * 900};limit=200";
+                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;filter=member;sincetime={start};beforetime={start + i * increment};limit=200";
                 var response = await Request(url);
                 var found = response.FindAll("<EVENT id=\"[0-9]*\">(.*?)</EVENT>");
 
                 // Add delegate changes
                 foreach (var happening in found)
-                    if (!waHappenings.Contains(happening) && happening.Contains("WA Delegate"))
+                    if (!waHappenings.Contains(happening) && happening.ToLower().Contains("wa delegate") &&
+                        happening.ToLower().Contains("became"))
                     {
                         waHappenings.Add(happening);
                         more = true;
@@ -136,6 +139,15 @@ namespace Kronos.Repo
 
             taggedDefender = await RegionsWithTag("defender");
             return taggedDefender;
+        }
+
+        /// <summary> Get the names of all regions with the "independent" tag </summary>
+        public async Task<List<string>> TaggedIndependent()
+        {
+            if (taggedIndependent != null) return taggedIndependent;
+
+            taggedIndependent = await RegionsWithTag("independent");
+            return taggedIndependent;
         }
 
         /// <summary> Get the names of all regions without founder </summary>
@@ -211,6 +223,20 @@ namespace Kronos.Repo
             var url = $"https://www.nationstates.net/cgi-bin/api.cgi?region={region}&q=lastupdate";
             var response = await Request(url);
             return int.Parse(response.Find("<LASTUPDATE>(.*)</LASTUPDATE>"));
+        }
+
+        /// <summary>
+        ///     Get the embassies for a region
+        /// </summary>
+        public async Task<Dictionary<string, string>> EmbassiesOf(string region)
+        {
+            region = region.ToLower().Replace(" ", "_");
+            var url = $"https://www.nationstates.net/cgi-bin/api.cgi?region={region}&q=embassies";
+            var response = await Request(url);
+            var embassies = new Dictionary<string, string>();
+            foreach (var line in response.Split("\n").ToList().Where(l => l.Contains("EMBASSY")))
+                embassies[line.Find(">(.*)<")] = line.Contains("type=") ? line.Find("type=\"(.*)\"") : "open";
+            return embassies;
         }
     }
 }

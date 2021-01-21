@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using KronosConsole.Repo;
-using KronosConsole.UI;
 
 namespace KronosConsole.Commands
 {
@@ -10,7 +9,7 @@ namespace KronosConsole.Commands
         /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
         public async Task Run()
         {
-            await new Kronos.Commands.Ops().Run(Shared.UserAgent, true);
+            await new Kronos.Commands.Ops().Run(Shared.UserAgent, Shared.UserTags, true);
         }
     }
 }

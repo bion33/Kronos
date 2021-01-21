@@ -39,8 +39,9 @@ namespace Kronos.Commands
             var regions = await RepoRegionDump.Dump(userAgent).Regions(interactiveLog);
             var targetIndex = -1;
 
-            // Get target region from argument if it was provided
-            targetIndex = regions.FindIndex(r => r.name.ToLower() == targetRegion.ToLower());
+            // Get index of target region in list from dump
+            targetIndex = regions.FindIndex(r =>
+                string.Equals(r.name, targetRegion, StringComparison.InvariantCultureIgnoreCase));
             if (targetIndex < 0) throw new Exception("Target region not found");
 
             target = regions[targetIndex];

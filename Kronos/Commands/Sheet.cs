@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Kronos.Domain;
@@ -25,7 +26,7 @@ namespace Kronos.Commands
             if (interactiveLog) Console.Write("Creating update sheet... ");
 
             await XlsxSheet(regions);
-            
+
             if (interactiveLog) Console.Write("[done].\n");
         }
 
@@ -106,7 +107,7 @@ namespace Kronos.Commands
 
             // Save
             var date = TimeUtil.DateForPath();
-            System.IO.Directory.CreateDirectory(date);
+            Directory.CreateDirectory(date);
             wb.SaveAs($"{date}/Kronos-TimeSheet_{date}.xlsx");
         }
     }

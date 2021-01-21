@@ -8,19 +8,21 @@ namespace KronosConsole
 {
     internal static class Program
     {
-        
         /// <summary> Entry point for the console application </summary>
         private static async Task Main(string[] args)
         {
             var version = GetVersion();
-            
+
             // Greeting
             UIConsole.Show($"Kronos, at your service.\n{version}\n");
             var lu = LatestUpdate();
-            if (!lu.Equals(version)) 
-                UIConsole.Show($"The latest release of Kronos is {lu}. You can find it here: https://github.com/Krypton-Nova/Kronos/releases \n");
+            if (!lu.Equals(version))
+                UIConsole.Show(
+                    $"The latest release of Kronos is {lu}. You can find it here: https://github.com/Krypton-Nova/Kronos/releases \n");
 
+            // Read settings
             var unusedUserAgent = Shared.UserAgent;
+            var unusedUserTags = Shared.UserTags;
 
             // Run until Quit command is given.
             while (true)
@@ -42,15 +44,17 @@ namespace KronosConsole
             try
             {
                 using var reader = File.OpenText(@"README.md");
-                string lines = reader.ReadToEnd();
+                var lines = reader.ReadToEnd();
                 foreach (var l in lines.Split("\n"))
                 {
                     if (!l.Contains("Latest release: ")) continue;
-                    
+
                     return l.Split("Latest release: ")[1].Split(" ")[0];
                 }
             }
-            catch (FileNotFoundException) {}
+            catch (FileNotFoundException)
+            {
+            }
 
             return "ERROR: Couldn't get current version from README.md!";
         }
@@ -58,12 +62,14 @@ namespace KronosConsole
         /// <summary> Get the latest version of Kronos from the README.md file in the repository </summary>
         private static string LatestUpdate()
         {
-            var response = new WebClient().DownloadString("https://raw.githubusercontent.com/Krypton-Nova/Kronos/master/README.md");
+            var response =
+                new WebClient().DownloadString(
+                    "https://raw.githubusercontent.com/Krypton-Nova/Kronos/master/README.md");
 
             foreach (var l in response.Split("\n"))
             {
                 if (!l.Contains("Latest release: ")) continue;
-                    
+
                 return l.Split("Latest release: ")[1].Split(" ")[0];
             }
 
