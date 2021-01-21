@@ -61,8 +61,13 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 #### v3.2.3 (2021-01-21)
 
+* Operations Report: Reduce WAD move time to region from 24h to 12h to filter out false positives from the previous update.
+* Operations Report: Filter "independent" operations and show them separately
+* Operations Report: Allow user to manually configure regions to be considered as raider/independent/defender or be prioritized (shown apart from the rest at the top of the report). See config.txt, it accepts a comma-separated list of region names for each tag.
+* Operations Report: Sort reports by update timestamp
 * Timer: Allow region to be specified as link or as id.
 * Added Windows build script
+
 
 #### v3.2.2 (2021-01-08)
 

@@ -8,7 +8,6 @@ dotnet publish -c Release -r osx-x64 /p:PublishSingleFile=true
 dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true
 cd ..
 
-REM Remove build
 RMDIR /S /Q build
 
 mkdir build
@@ -32,11 +31,19 @@ type nul >>"build\windows\Open README and LICENSE with a text editor" & copy "bu
 
 cd build\linux
 powershell "Compress-Archive ..\linux linux.zip"
+move linux.zip ..\linux.zip
 cd ..\osx
 powershell "Compress-Archive ..\osx osx.zip"
+move osx.zip ..\osx.zip
 cd ..\windows
 powershell "Compress-Archive ..\windows windows.zip"
+move windows.zip ..\windows.zip
+
 cd ..\..
 
 cd build
+
+RMDIR /S /Q linux
+RMDIR /S /Q osx
+RMDIR /S /Q windows
 cd ..

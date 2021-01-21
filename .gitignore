@@ -347,6 +347,5 @@ healthchecksdb
 MigrationBackup/
 
 
-/build/*
 /Open README and LICENSE with a text editor
-*.zip
+
