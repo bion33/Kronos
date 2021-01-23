@@ -4,6 +4,7 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <AssemblyName>Kronos-Console</AssemblyName>
+        <Version>3.2.4</Version>
     </PropertyGroup>
 
     <ItemGroup>
