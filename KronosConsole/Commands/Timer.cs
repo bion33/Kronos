@@ -21,6 +21,7 @@ namespace KronosConsole.Commands
         public Timer(List<string> arguments)
         {
             argument = string.Join(" ", arguments);
+            argument = ResolveRegionName(argument);
         }
 
         /// <summary> Show an estimated countdown to a region's next update </summary>
@@ -37,15 +38,7 @@ namespace KronosConsole.Commands
             {
                 UIConsole.Show("\nTarget Region: ");
                 var t = UIConsole.GetInput();
-
-                if(t.StartsWith("https://www.nationstates.net/region="))
-                {
-                    t = t["https://www.nationstates.net/region=".Length..];
-                }
-                if (t.Contains("_"))
-                {
-                    t = FromID(t);
-                }
+                t = ResolveRegionName(t);
 
                 if (t == "") return;
                 targetIndex = regions.FindIndex(r => r.name.ToLower() == t.ToLower());
@@ -54,7 +47,7 @@ namespace KronosConsole.Commands
 
             timer = new Kronos.Commands.Timer(regions[targetIndex].name);
             
-#pragma warning disable CS4014 
+#pragma warning disable CS4014
             timer.Run(Shared.UserAgent, true);
 #pragma warning restore CS4014
 
@@ -71,6 +64,20 @@ namespace KronosConsole.Commands
             timer.Stop();
 
             UIConsole.Show("\n\n");
+        }
+
+        private static string ResolveRegionName(string name)
+        {
+            if (name.Trim().StartsWith("https://www.nationstates.net/region="))
+            {
+                name = name.Trim()["https://www.nationstates.net/region=".Length..];
+            }
+            if (name.Contains("_"))
+            {
+                name = FromID(name);
+            }
+
+            return name;
         }
 
         /// <summary>
