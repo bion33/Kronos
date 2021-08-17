@@ -115,15 +115,15 @@ namespace KronosConsole.Repo
             try
             {
                 return value
-                    .Replace(", ", ",")
-                    .Replace(": ", ":")
-                    .TrimEnd()
-                    .Split(":")[1]
-                    .TrimStart()
-                    .Replace(" ", "_")
-                    .ToLower()
-                    .Split(",")
-                    .ToList();
+                       .Replace(", ", ",")
+                       .Replace(": ", ":")
+                       .TrimEnd()
+                       .Split(":")[1]
+                       .TrimStart()
+                       .Replace(" ", "_")
+                       .ToLower()
+                       .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                       .ToList();
             }
             // Empty line
             catch (IndexOutOfRangeException)

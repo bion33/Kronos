@@ -9,7 +9,7 @@ namespace KronosConsole.Commands
         /// <summary> Generate a sheet with update times and information for all regions </summary>
         public async Task Run()
         {
-            await new Kronos.Commands.Sheet().Run(Shared.UserAgent, true);
+            await new Kronos.Commands.Sheet().Run(Shared.UserAgent, Shared.UserTags, true);
         }
     }
 }

@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.2.4 (2021-01-23)
+### Latest release: v3.3.0 (2021-08-17)
 
 
 #### Author
@@ -32,10 +32,21 @@ Syntax:  ./Kronos [-d] [-s] [-o] [-t [region name]] [-q] </br>
 -q, -quit </br>
 * Kronos will quit once it encounters this option. Without this option, and upon completion of other commands, Kronos will ask you again what you'd like to do. Keep in mind that the order of options matters, options after the -quit option will not be run.
 
-
 ## CONFIGURATION
 
-A User-Agent must be configured to comply with NS script rules. The application asks you to either fill in your nation or email address. Use a nation or email address you check frequently so that you NS can contact you if something goes wrong. This information will be stored in a file called "config.txt".
+All configuration is stored in a file called "config.txt". This file is created if it does not exist (yet). The format is `KeyWord: value`. Keywords are case-sensitive, and each keyword and value pair must be on it's own line, not taking up more than one line.
+
+### Keywords
+
+`UserInfo` - Contains the User-Agent, and must be configured to comply with NS script rules. The application will ask you to fill in your nation or email address at startup when this is empty or "config.txt" does not exist. Use a nation or email address you check frequently so that you NS can contact you if something goes wrong.
+
+`RaiderRegions` - Contains a comma-separated list of regions to consider "raider" (for example: `RaiderRegions: Lone Wolves United, HYDRA Command`). Regions which have an embassy with one of these regions, pending or not, will be marked as tagged in full sheets, included in detag sheets, and included under raider activity in operations reports. 
+
+`IndependentRegions` - Similar to the above, but for regions to consider "independent". Used in operation reports, but has currently no effect on detag and full sheets.
+
+`DefenderRegions` - Similar to the above, but for regions to consider "defender". Used in operation reports, but has currently no effect on detag and full sheets.
+
+`PriorityRegions` - Similar to the above, but for regions to keep a close eye on. Used in operation reports, but has currently no effect on detag and full sheets.
 
 
 ## Common Issues
@@ -59,7 +70,12 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 ## CHANGELOG
 
-#### v3.2.4 (2021-01-23)
+### v3.3.0 (2021-08-17)
+
+* Improved delegacy change detection for operations reports
+* Include embassies in categorisation for detag and full sheets, so that users can now for example add raider regions to their config and get more accurate detag sheets and full sheets
+
+### v3.2.4 (2021-01-23)
 
 * Timer: Fix region name detection, to allow the improved detection to be used everytime
 

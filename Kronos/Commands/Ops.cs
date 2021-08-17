@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Kronos.Domain;
 using Kronos.Repo;
 using Kronos.Utilities;
 
@@ -15,12 +16,7 @@ namespace Kronos.Commands
     public class Ops : ICommand
     {
         private RepoApi api;
-
-        /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
-        public async Task Run(string userAgent, bool interactiveLog = false)
-        {
-            await Run(userAgent, new Dictionary<string, string>(), interactiveLog);
-        }
+        private List<Region> regions;
 
         /// <summary> Generate a report of likely military operations during the last (major or minor) update </summary>
         public async Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false)
@@ -28,24 +24,25 @@ namespace Kronos.Commands
             Console.Write("Compiling operations report... \n");
 
             api = RepoApi.Api(userAgent);
+            regions = await RepoRegionDump.Dump(userAgent, userTags).Regions();
 
             // Start and end of last (major or minor) update
             var updateStart = StartOfLastUpdate();
-            var updateEnd = updateStart + 3 * 3600;
+            var updateEnd = await api.LastUpdateFor(regions.Last().Name);
 
             // Get happenings
-            var delegateChangeHappenings = await api.DelegateChangesFrom(updateStart);
+            var delegateChangeHappenings = await api.DelegateChangesFrom(updateStart, updateEnd);
 
             // Parse each happening to the DelegacyChange DTO
             var delegacyChanges = DelegacyChanges(delegateChangeHappenings);
 
             // Filter out the suspicious changes from among the (supposedly) legitimate changes
-            var ops = await FilterOps(delegacyChanges, updateEnd - 43200, userTags, userAgent, interactiveLog);
+            var ops = await FilterOps(delegacyChanges, updateEnd - 43200, userTags, interactiveLog);
 
             if (interactiveLog) Console.Write("Saving to report... ");
 
             // Generate report
-            ops = ops.OrderBy(o => o.changeTimeStamp).ToList();
+            ops = ops.OrderBy(o => o.ChangeTimeStamp).ToList();
             var report = Report(ops);
 
             // Save
@@ -89,16 +86,19 @@ namespace Kronos.Commands
         }
 
         /// <summary> Convert each delegacy change happening to the DelegacyChange DTO </summary>
-        private static List<DelegacyChange> DelegacyChanges(List<string> changes)
+        private List<DelegacyChange> DelegacyChanges(List<string> changes)
         {
             var delegacyChanges = new List<DelegacyChange>();
             foreach (var change in changes)
+            {
+                var name = change.Find("%%(.*?)%%");
                 delegacyChanges.Add(new DelegacyChange
                 {
-                    region = change.Find("%%(.*?)%%"),
-                    newDelegate = change.Find("@@(.*?)@@"),
-                    changeTimeStamp = int.Parse(change.Find("<TIMESTAMP>(.*?)</TIMESTAMP>"))
+                    Region = regions.Find(r => r.Name.ToLower().Replace(" ", "_") == name),
+                    NewDelegate = change.Find("@@(.*?)@@"),
+                    ChangeTimeStamp = int.Parse(change.Find("<TIMESTAMP>(.*?)</TIMESTAMP>"))
                 });
+            }
 
             return delegacyChanges;
         }
@@ -111,7 +111,7 @@ namespace Kronos.Commands
         /// </summary>
         /// <returns> A dictionary with region-name, OpType pairs </returns>
         private async Task<List<DelegacyChange>> FilterOps(List<DelegacyChange> delegacyChanges, double since,
-            Dictionary<string, string> userTags, string userAgent, bool interactiveLog = false)
+            Dictionary<string, string> userTags, bool interactiveLog = false)
         {
             // Get regions with tag
             var invaders = await api.TaggedInvader();
@@ -127,7 +127,7 @@ namespace Kronos.Commands
                 var change = c;
 
                 // Delegate nation name
-                var delegateName = change.newDelegate;
+                var delegateName = change.NewDelegate;
                 // Get the last moves made by that nation since ...
                 var delMoves = await LastMoves(delegateName, since);
 
@@ -136,27 +136,26 @@ namespace Kronos.Commands
                 {
                     // Get the move right before becoming delegate
                     var moveBeforeBecomingWaD =
-                        MoveBeforeBecomingDelegate(delMoves, change.changeTimeStamp);
+                        MoveBeforeBecomingDelegate(delMoves, change.ChangeTimeStamp);
 
                     // Skip change if nation didn't move before becoming delegate (it might have moved after)
                     if (moveBeforeBecomingWaD == null) continue;
 
-                    change.region = TextUtil.ToTitleCase(change.region.Replace("_", " "));
                     var movedFrom = moveBeforeBecomingWaD.Find("%%(.*?)%%");
 
                     // Determine operation type
-                    change.opType = OpTypeFromOrigin(movedFrom, invaders, imperialists, defenders, independents,
-                        userTags);
-                    if (change.opType == OpType.Suspicious)
-                        change.opType = await OpTypeFromEmbassies(change.region, userTags, userAgent);
+                    change.OpType = OpTypeFromOrigin(movedFrom, invaders, imperialists, defenders, independents,
+                                                     userTags);
+                    if (change.OpType == OpType.Suspicious)
+                        change.OpType = OpTypeFromEmbassies(change.Region);
 
                     // Add change to operations
                     ops.Add(change);
 
                     if (interactiveLog)
                     {
-                        var type = change.opType.ToString();
-                        Console.Write($"* {type} activity in {change.region}\n");
+                        var type = change.OpType.ToString();
+                        Console.Write($"* {type} activity in {change.Region}\n");
                     }
                 }
             }
@@ -198,25 +197,19 @@ namespace Kronos.Commands
         /// <summary>
         ///     Based on the region's embassies, determine what kind of operation it was
         /// </summary>
-        private async Task<OpType> OpTypeFromEmbassies(string region, Dictionary<string, string> userTags,
-            string userAgent)
+        private static OpType OpTypeFromEmbassies(Region region)
         {
-            // Get region's embassies
-            var embassies = await RepoApi.Api(userAgent).EmbassiesOf(region);
+            // If any pending embassy was in userTags, use it's corresponding tag to define the opType
+            var embassy = region.Embassies.Find(e => e.Pending && e.EmbassyType != EmbassyClass.None);
 
-            // If any pending embassy is in userTags, use it's corresponding tag to define the opType
-            foreach (var pair in userTags)
-                if (embassies.Any(e => e.Value == "pending" && e.Key.ToLower().Replace(" ", "_") == pair.Key))
-                    switch (pair.Value)
-                    {
-                        case "PriorityRegions": return OpType.Priority;
-                        case "RaiderRegions": return OpType.Raider;
-                        case "IndependentRegions": return OpType.Independent;
-                        case "DefenderRegions": return OpType.Defender;
-                    }
-
-            // Default
-            return OpType.Suspicious;
+            return embassy?.EmbassyType switch
+            {
+                EmbassyClass.PriorityRegions    => OpType.Priority,
+                EmbassyClass.RaiderRegions      => OpType.Raider,
+                EmbassyClass.IndependentRegions => OpType.Independent,
+                EmbassyClass.DefenderRegions    => OpType.Defender,
+                _                               => OpType.Suspicious
+            };
         }
 
         /// <summary> Make a readable report out of a dictionary with region-name, OpType pairs </summary>
@@ -253,14 +246,14 @@ namespace Kronos.Commands
         {
             opTypeName ??= opType.ToString();
             var section = "";
-            var group = ops.Where(p => p.opType == opType).ToList();
+            var group = ops.Where(p => p.OpType == opType).ToList();
             if (group.Count > 0)
             {
                 section += $"\n# === {group.Count} {opTypeName} {opSynonym}s === \n";
                 group.ForEach(p =>
                 {
-                    var link = $"https://www.nationstates.net/region={p.region.ToLower().Replace(" ", "_")}";
-                    section += $"* {opSynonym} in {p.region} @ {TimeUtil.ToUpdateOffset(p.changeTimeStamp)} \n{link}\n";
+                    var link = $"https://www.nationstates.net/region={p.Region.Name.ToLower().Replace(" ", "_")}";
+                    section += $"* {opSynonym} in {p.Region} @ {TimeUtil.ToUpdateOffset(p.ChangeTimeStamp)} \n{link}\n";
                 });
             }
 
@@ -270,10 +263,10 @@ namespace Kronos.Commands
         /// <summary> DTO for delegacy change happenings </summary>
         private struct DelegacyChange
         {
-            public string region;
-            public string newDelegate;
-            public int changeTimeStamp;
-            public OpType opType;
+            public Region Region;
+            public string NewDelegate;
+            public int ChangeTimeStamp;
+            public OpType OpType;
         }
 
         /// <summary> Enum for categorising operations </summary>

@@ -19,9 +19,9 @@ namespace Kronos.Commands
         private RepoRegionDump dump;
 
         /// <summary> Generate a sheet with update times and information for detag-able regions </summary>
-        public async Task Run(string userAgent, bool interactiveLog = false)
+        public async Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false)
         {
-            dump = RepoRegionDump.Dump(userAgent);
+            dump = RepoRegionDump.Dump(userAgent, userTags);
             var regions = await dump.Regions(interactiveLog);
 
             if (interactiveLog) Console.Write("Creating detag sheet... ");
@@ -36,10 +36,13 @@ namespace Kronos.Commands
         ///     Filter regions to return only those which have no password, executive WA Delegate authority, and are
         ///     tagged "invader".
         /// </summary>
-        private List<Region> Filter(List<Region> regions)
+        private static List<Region> Filter(List<Region> regions)
         {
-            return regions.FindAll(r => !r.password && r.delegateAuthority.ToUpper().Contains("X") && r.tagged)
-                .ToList();
+            return regions.FindAll(r =>
+            {
+                return !r.Password && r.DelegateAuthority.ToUpper().Contains("X")
+                                   && (r.Tagged || r.Embassies.Any(e => e.EmbassyType == EmbassyClass.RaiderRegions));
+            }).ToList();
         }
 
         /// <summary> Generate a XLSX sheet containing the relevant information </summary>
@@ -67,15 +70,15 @@ namespace Kronos.Commands
                 var region = regions[i - 2];
                 row = new List<object>
                 {
-                    "'" + region.name,
-                    "'" + region.readableMajorUpdateTime,
-                    "'" + region.readableMinorUpdateTime,
-                    region.nationCount,
-                    region.delegateVotes,
-                    !region.founderless ? "Y" : "N"
+                    "'" + region.Name,
+                    "'" + region.ReadableMajorUpdateTime,
+                    "'" + region.ReadableMinorUpdateTime,
+                    region.NationCount,
+                    region.DelegateVotes,
+                    !region.Founderless ? "Y" : "N"
                 };
                 ws.AddRow(i, row);
-                ws.Cell($"G{i}").SetValue(region.url).Hyperlink = new XLHyperlink(region.url);
+                ws.Cell($"G{i}").SetValue(region.Url).Hyperlink = new XLHyperlink(region.Url);
             }
 
             // Style header
@@ -92,9 +95,9 @@ namespace Kronos.Commands
 
             // Add conditional colours for whether or not the region has a founder
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("Y").Fill
-                .SetBackgroundColor(XLColor.Green);
+              .SetBackgroundColor(XLColor.Green);
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("N").Fill
-                .SetBackgroundColor(XLColor.Red);
+              .SetBackgroundColor(XLColor.Red);
 
             // Save
             var date = TimeUtil.DateForPath();

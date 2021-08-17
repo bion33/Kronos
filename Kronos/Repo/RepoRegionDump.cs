@@ -15,26 +15,28 @@ namespace Kronos.Repo
     /// <summary> NS region data from dump </summary>
     public class RepoRegionDump
     {
-        private const string DumpUrl = "https://www.nationstates.net/pages/regions.xml.gz";
+        private const string DUMP_URL = "https://www.nationstates.net/pages/regions.xml.gz";
 
         private static RepoRegionDump dump;
         private readonly string dumpGz = $".Regions_{TimeUtil.DateForPath()}.xml.gz";
         private readonly string dumpXml = $".Regions_{TimeUtil.DateForPath()}.xml";
         private readonly string userAgent;
+        private readonly Dictionary<string, string> userTags;
         private int numNations;
 
         private List<Region> regions;
 
         /// <summary> This class is a singleton </summary>
-        private RepoRegionDump(string userAgent)
+        private RepoRegionDump(string userAgent, Dictionary<string, string> userTags)
         {
             this.userAgent = userAgent;
+            this.userTags = userTags != null ? userTags : new Dictionary<string, string>();
         }
 
         /// <summary> This class is a singleton </summary>
-        public static RepoRegionDump Dump(string userAgent)
+        public static RepoRegionDump Dump(string userAgent, Dictionary<string, string> userTags)
         {
-            return dump ??= new RepoRegionDump(userAgent);
+            return dump ??= new RepoRegionDump(userAgent, userTags);
         }
 
         /// <summary> Make sure the latest region dump is downloaded and extracted, and old ones are removed </summary>
@@ -46,7 +48,7 @@ namespace Kronos.Repo
             if (interactiveLog) Console.Write("Getting regions dump... ");
 
             RemoveOldDumps();
-            await GetDumpAsync(DumpUrl);
+            await GetDumpAsync(DUMP_URL);
             await ExtractGz();
 
             if (interactiveLog) Console.Write("[done].\n");
@@ -124,25 +126,59 @@ namespace Kronos.Repo
                 // Count nations
                 numNations += nations;
 
+                // Parse embassies
+                var embassies = new List<Embassy>();
+                foreach (var embassy in element.Element("EMBASSIES")!.Elements("EMBASSY"))
+                {
+                    var urlName = embassy.Value.ToLower().Replace(" ", "_");
+
+                    EmbassyClass ec;
+                    if (userTags.ContainsKey(urlName))
+                        ec = userTags[urlName] switch
+                        {
+                            "PriorityRegions"    => EmbassyClass.PriorityRegions,
+                            "RaiderRegions"      => EmbassyClass.RaiderRegions,
+                            "IndependentRegions" => EmbassyClass.IndependentRegions,
+                            "DefenderRegions"    => EmbassyClass.DefenderRegions,
+                            _                    => EmbassyClass.None
+                        };
+                    else ec = EmbassyClass.None;
+
+                    if (!embassy.Attributes().Any(a =>
+                                                      a.Name.ToString().ToLower() == "type" &&
+                                                      a.Value.ToLower() == "invited"))
+                    {
+                        embassies.Add(new Embassy
+                        {
+                            Name = embassy.Value,
+                            Pending = embassy.Attributes().Any(a =>
+                                                                   a.Name.ToString().ToLower() == "type" &&
+                                                                   a.Value.ToLower() == "pending"),
+                            EmbassyType = ec
+                        });
+                    }
+                }
+
                 // Get region info from XML, and complete it with data from the API
                 regions.Add(new Region
                 {
-                    name = name,
-                    url = $"https://www.nationstates.net/region={name.ToLower().Replace(" ", "_")}",
-                    nationCount = nations,
-                    nationCumulative = numNations,
-                    delegateVotes = int.Parse(element.XPathSelectElement("DELEGATEVOTES").Value),
-                    delegateAuthority = element.XPathSelectElement("DELEGATEAUTH").Value,
-                    majorUpdateTime = int.Parse(element.XPathSelectElement("LASTUPDATE").Value),
-                    founderless = (await api.TaggedFounderless()).Contains(name),
-                    password = (await api.TaggedPassword()).Contains(name),
-                    tagged = (await api.TaggedInvader()).Contains(name)
+                    Name = name,
+                    Url = $"https://www.nationstates.net/region={name.ToLower().Replace(" ", "_")}",
+                    NationCount = nations,
+                    NationCumulative = numNations,
+                    DelegateVotes = int.Parse(element.XPathSelectElement("DELEGATEVOTES").Value),
+                    DelegateAuthority = element.XPathSelectElement("DELEGATEAUTH").Value,
+                    MajorUpdateTime = int.Parse(element.XPathSelectElement("LASTUPDATE").Value),
+                    Founderless = (await api.TaggedFounderless()).Contains(name),
+                    Password = (await api.TaggedPassword()).Contains(name),
+                    Tagged = (await api.TaggedInvader()).Contains(name),
+                    Embassies = embassies
                 });
             }
 
             await AddMinorUpdateTimes();
             AddReadableUpdateTimes();
-
+            
             if (interactiveLog) Console.Write("[done].\n");
 
             return regions;
@@ -155,9 +191,9 @@ namespace Kronos.Repo
             var minorTick = minorDuration / numNations;
 
             for (var i = 0; i < regions.Count; i++)
-                regions[i].minorUpdateTime = i == 0
-                    ? regions[i].nationCount * minorTick + TimeUtil.UnixLastMinorStart()
-                    : regions[i - 1].minorUpdateTime + regions[i - 1].nationCount * minorTick;
+                regions[i].MinorUpdateTime = i == 0
+                    ? regions[i].NationCount * minorTick + TimeUtil.UnixLastMinorStart()
+                    : regions[i - 1].MinorUpdateTime + regions[i - 1].NationCount * minorTick;
         }
 
         /// <summary> Calculate readable update time (as HH:MM:SS since the start of each update) </summary>
@@ -165,8 +201,8 @@ namespace Kronos.Repo
         {
             for (var i = 0; i < regions.Count; i++)
             {
-                regions[i].readableMajorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].majorUpdateTime);
-                regions[i].readableMinorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].minorUpdateTime);
+                regions[i].ReadableMajorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].MajorUpdateTime);
+                regions[i].ReadableMinorUpdateTime = TimeUtil.ToUpdateOffset(regions[i].MinorUpdateTime);
             }
         }
 
@@ -176,7 +212,7 @@ namespace Kronos.Repo
             await EnsureDumpReady();
             await Regions();
 
-            return regions.Last().majorUpdateTime - regions.First().majorUpdateTime;
+            return regions.Last().MajorUpdateTime - regions.First().MajorUpdateTime;
         }
 
         /// <summary> Calculate length of last minor </summary>
@@ -185,7 +221,7 @@ namespace Kronos.Repo
             await EnsureDumpReady();
             await Regions();
 
-            return regions.Last().minorUpdateTime - regions.First().minorUpdateTime;
+            return regions.Last().MinorUpdateTime - regions.First().MinorUpdateTime;
         }
 
         /// <summary> Calculate length of last major </summary>

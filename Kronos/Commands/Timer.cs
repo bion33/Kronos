@@ -14,7 +14,7 @@ namespace Kronos.Commands
     /// </summary>
     public class Timer : ICommand
     {
-        private const int LastTriggerSecondsBeforeTarget = 3;
+        private const int LAST_TRIGGER_SECONDS_BEFORE_TARGET = 3;
         private readonly string targetRegion;
         private RepoApi api;
         private int currentTrigger = 1;
@@ -31,17 +31,18 @@ namespace Kronos.Commands
         }
 
         /// <summary> Show an estimated countdown to a region's next update </summary>
-        public async Task Run(string userAgent, bool interactiveLog = false)
+        public async Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false)
         {
-            dump = RepoRegionDump.Dump(userAgent);
+            dump = RepoRegionDump.Dump(userAgent, userTags);
             api = RepoApi.Api(userAgent);
 
-            var regions = await RepoRegionDump.Dump(userAgent).Regions(interactiveLog);
+            var regions = await dump.Regions(interactiveLog);
             var targetIndex = -1;
 
             // Get index of target region in list from dump
             targetIndex = regions.FindIndex(r =>
-                string.Equals(r.name, targetRegion, StringComparison.InvariantCultureIgnoreCase));
+                                                string.Equals(r.Name, targetRegion,
+                                                              StringComparison.InvariantCultureIgnoreCase));
             if (targetIndex < 0) throw new Exception("Target region not found");
 
             target = regions[targetIndex];
@@ -77,7 +78,7 @@ namespace Kronos.Commands
             // This "interval" represents an amount of nations. Given the length of an update, it can be used to
             // approximate the time between the updates of two regions. As the length of update is variable, this
             // interval should not be static.
-            var firstInterval = (int) (LastTriggerSecondsBeforeTarget * await dump.NumNations() /
+            var firstInterval = (int) (LAST_TRIGGER_SECONDS_BEFORE_TARGET * await dump.NumNations() /
                                        (lastUpdateTook + 0.0));
 
             triggers = new List<Region>();
@@ -95,8 +96,8 @@ namespace Kronos.Commands
             // consider the current region as a new trigger. 
             for (var i = targetIndex; i >= 0; i--)
                 if (i == targetIndex
-                    || triggers.Last().nationCumulative - triggers.Last().nationCount -
-                    (regions[i].nationCumulative - regions[i].nationCount) > firstInterval * multiplier)
+                    || triggers.Last().NationCumulative - triggers.Last().NationCount -
+                    (regions[i].NationCumulative - regions[i].NationCount) > firstInterval * multiplier)
                 {
                     triggers.Add(regions[i]);
                     multiplier *= 1.5;
@@ -109,7 +110,7 @@ namespace Kronos.Commands
         /// <summary> Check if a region has updated. Keep in mind that this is limited by RepoApi to 1 request per second! </summary>
         private async Task<bool> Updated(Region region)
         {
-            var lastUpdate = await api.LastUpdateFor(region.name);
+            var lastUpdate = await api.LastUpdateFor(region.Name);
             var startOfThisUpdate =
                 nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
 
@@ -128,7 +129,7 @@ namespace Kronos.Commands
         private double NextUpdateFor(Region region, double averageSecondsPerNation)
         {
             var nextUpdate = nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
-            return nextUpdate + averageSecondsPerNation * (region.nationCumulative - region.nationCount);
+            return nextUpdate + averageSecondsPerNation * (region.NationCumulative - region.NationCount);
         }
 
         /// <summary>
@@ -192,9 +193,9 @@ namespace Kronos.Commands
         /// </summary>
         private async Task SecsPerNation(Region trigger)
         {
-            var newUpdate = await api.LastUpdateFor(trigger.name);
+            var newUpdate = await api.LastUpdateFor(trigger.Name);
             var updateStart = nextUpdateIsMajor ? TimeUtil.UnixNextMajorStart() : TimeUtil.UnixNextMinorStart();
-            var newSecondsPerNation = (newUpdate - updateStart) / (trigger.nationCumulative - trigger.nationCount);
+            var newSecondsPerNation = (newUpdate - updateStart) / (trigger.NationCumulative - trigger.NationCount);
             secondsPerNation.Add(newSecondsPerNation);
         }
 
@@ -214,8 +215,8 @@ namespace Kronos.Commands
             var lastSecondsPerNation = secondsPerNation.Count > 1
                 ? secondsPerNation[^2]
                 : currentSecondsPerNation;
-            return currentSecondsPerNation * (target.nationCumulative - target.nationCount) - lastSecondsPerNation *
-                (target.nationCumulative - target.nationCount);
+            return currentSecondsPerNation * (target.NationCumulative - target.NationCount) - lastSecondsPerNation *
+                (target.NationCumulative - target.NationCount);
         }
 
         /// <summary> The trigger which is currently being watched until it updates </summary>

@@ -8,6 +8,12 @@ namespace Kronos.Utilities
     /// <summary> Common utilities for manipulating strings </summary>
     public static class TextUtil
     {
+        /// <summary> Turn a name like "a_region" into "A Region" </summary>
+        public static string ToReadableName(string s)
+        {
+            return ToTitleCase(s.ToLower().Replace("_", " "));
+        }
+
         /// <summary> Capitalize every first letter of every word in a sentence </summary>
         public static string ToTitleCase(string s)
         {

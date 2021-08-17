@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Kronos.Domain;
@@ -18,9 +19,9 @@ namespace Kronos.Commands
         private RepoRegionDump dump;
 
         /// <summary> Generate a sheet with update times and information for all regions </summary>
-        public async Task Run(string userAgent, bool interactiveLog = false)
+        public async Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false)
         {
-            dump = RepoRegionDump.Dump(userAgent);
+            dump = RepoRegionDump.Dump(userAgent, userTags);
             var regions = await dump.Regions();
 
             if (interactiveLog) Console.Write("Creating update sheet... ");
@@ -59,17 +60,19 @@ namespace Kronos.Commands
                 var region = regions[i - 2];
                 row = new List<object>
                 {
-                    "'" + region.name,
-                    "'" + region.readableMajorUpdateTime,
-                    "'" + region.readableMinorUpdateTime,
-                    region.nationCount,
-                    region.delegateVotes,
-                    !region.founderless ? "Founder" : region.password ? "Password" : "No",
-                    region.delegateAuthority.ToUpper().Contains("X") ? "Y" : "N",
-                    region.tagged ? "Y" : "N"
+                    "'" + region.Name,
+                    "'" + region.ReadableMajorUpdateTime,
+                    "'" + region.ReadableMinorUpdateTime,
+                    region.NationCount,
+                    region.DelegateVotes,
+                    !region.Founderless ? "Founder" : region.Password ? "Password" : "No",
+                    region.DelegateAuthority.ToUpper().Contains("X") ? "Y" : "N",
+                    region.Tagged || region.Embassies.Any(e => e.EmbassyType == EmbassyClass.RaiderRegions)
+                        ? "Y"
+                        : "N"
                 };
                 ws.AddRow(i, row);
-                ws.Cell($"I{i}").SetValue(region.url).Hyperlink = new XLHyperlink(region.url);
+                ws.Cell($"I{i}").SetValue(region.Url).Hyperlink = new XLHyperlink(region.Url);
             }
 
             // Style header
@@ -87,23 +90,23 @@ namespace Kronos.Commands
             // Add conditional colours for whether or not the region has a founder (green) or password (olive)
             // Use yellow for unprotected regions
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenStartsWith("F").Fill
-                .SetBackgroundColor(XLColor.Green);
+              .SetBackgroundColor(XLColor.Green);
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenStartsWith("P").Fill
-                .SetBackgroundColor(XLColor.Olive);
+              .SetBackgroundColor(XLColor.Olive);
             ws.Range("F2", $"F{regions.Count + 1}").AddConditionalFormat().WhenStartsWith("N").Fill
-                .SetBackgroundColor(XLColor.Yellow);
+              .SetBackgroundColor(XLColor.Yellow);
 
             // Add conditional colours for whether or not the WA Delegacy is executive
             ws.Range("G2", $"G{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("Y").Fill
-                .SetBackgroundColor(XLColor.DarkOrange);
+              .SetBackgroundColor(XLColor.DarkOrange);
             ws.Range("G2", $"G{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("N").Fill
-                .SetBackgroundColor(XLColor.Green);
+              .SetBackgroundColor(XLColor.Green);
 
             // Add conditional colours for whether or not the region is tagged "invader"
             ws.Range("H2", $"H{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("Y").Fill
-                .SetBackgroundColor(XLColor.Red);
+              .SetBackgroundColor(XLColor.Red);
             ws.Range("H2", $"H{regions.Count + 1}").AddConditionalFormat().WhenEndsWith("N").Fill
-                .SetBackgroundColor(XLColor.Green);
+              .SetBackgroundColor(XLColor.Green);
 
             // Save
             var date = TimeUtil.DateForPath();

@@ -70,32 +70,38 @@ namespace Kronos.Repo
         }
 
         /// <summary> Get nations becoming, usurping and being removed from the position of WA Delegate </summary>
-        public async Task<List<string>> DelegateChangesFrom(double start)
+        public async Task<List<string>> DelegateChangesFrom(double start, double end)
         {
             var waHappenings = new List<string>();
-            var more = true;
-            var i = 1;
-            var increment = 900;
+            var decrement = 200;
+            var lastId = "";
+            var i = 0;
+            var m = 0;
 
-            // Run while more delegate changes are found, and less than 4 hours after start
-            while (more && i * increment < 14400)
+            // Run while beforetime is after start of update
+            while (end > start)
             {
-                more = false;
-
-                // Get (<= 200) happenings
                 var url =
-                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;filter=member;sincetime={start};beforetime={start + i * increment};limit=200";
+                    $"https://www.nationstates.net/cgi-bin/api.cgi?q=happenings;filter=member;beforetime={end};limit=200";
                 var response = await Request(url);
                 var found = response.FindAll("<EVENT id=\"[0-9]*\">(.*?)</EVENT>");
+                var currentId = response.FindAll("<EVENT id=\"(.*?)\">").Last();
+                if (found.Count > m) m = found.Count;
 
                 // Add delegate changes
                 foreach (var happening in found)
                     if (!waHappenings.Contains(happening) && happening.ToLower().Contains("wa delegate") &&
                         happening.ToLower().Contains("became"))
-                    {
                         waHappenings.Add(happening);
-                        more = true;
-                    }
+
+                // Reset start to last timestamp received
+                var lastTimeStamp = response.FindAll("<TIMESTAMP>(.*?)</TIMESTAMP>").Last();
+                if (!int.TryParse(lastTimeStamp, out var timestamp)) timestamp = (int) end;
+                end = timestamp + 1;
+
+                // Prevent getting stuck in a loop
+                if (found.Count == 0 || currentId == lastId) end -= decrement;
+                lastId = currentId;
 
                 i += 1;
             }
@@ -223,20 +229,6 @@ namespace Kronos.Repo
             var url = $"https://www.nationstates.net/cgi-bin/api.cgi?region={region}&q=lastupdate";
             var response = await Request(url);
             return int.Parse(response.Find("<LASTUPDATE>(.*)</LASTUPDATE>"));
-        }
-
-        /// <summary>
-        ///     Get the embassies for a region
-        /// </summary>
-        public async Task<Dictionary<string, string>> EmbassiesOf(string region)
-        {
-            region = region.ToLower().Replace(" ", "_");
-            var url = $"https://www.nationstates.net/cgi-bin/api.cgi?region={region}&q=embassies";
-            var response = await Request(url);
-            var embassies = new Dictionary<string, string>();
-            foreach (var line in response.Split("\n").ToList().Where(l => l.Contains("EMBASSY")))
-                embassies[line.Find(">(.*)<")] = line.Contains("type=") ? line.Find("type=\"(.*)\"") : "open";
-            return embassies;
         }
     }
 }

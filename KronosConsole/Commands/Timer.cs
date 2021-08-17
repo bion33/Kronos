@@ -27,11 +27,11 @@ namespace KronosConsole.Commands
         /// <summary> Show an estimated countdown to a region's next update </summary>
         public async Task Run()
         {
-            var regions = await RepoRegionDump.Dump(Shared.UserAgent).Regions(true);
+            var regions = await RepoRegionDump.Dump(Shared.UserAgent, Shared.UserTags).Regions(true);
             var targetIndex = -1;
 
             // Get target region from argument if it was provided
-            if (argument != null) targetIndex = regions.FindIndex(r => r.name.ToLower() == argument.ToLower());
+            if (argument != null) targetIndex = regions.FindIndex(r => r.Name.ToLower() == argument.ToLower());
 
             // Get target region from user (ask again if given target doesn't exist)
             while (targetIndex < 0)
@@ -41,15 +41,15 @@ namespace KronosConsole.Commands
                 t = ResolveRegionName(t);
 
                 if (t == "") return;
-                targetIndex = regions.FindIndex(r => r.name.ToLower() == t.ToLower());
+                targetIndex = regions.FindIndex(r => r.Name.ToLower() == t.ToLower());
                 if (targetIndex == -1) UIConsole.Show("Region name not found.\n");
             }
 
-            timer = new Kronos.Commands.Timer(regions[targetIndex].name);
-            
-#pragma warning disable CS4014
-            timer.Run(Shared.UserAgent, true);
-#pragma warning restore CS4014
+            timer = new Kronos.Commands.Timer(regions[targetIndex].Name);
+
+            #pragma warning disable CS4014
+            timer.Run(Shared.UserAgent, Shared.UserTags, true);
+            #pragma warning restore CS4014
 
             // Show timer header
             UIConsole.Show("Press [Q] to quit Timer.\n\n");
@@ -69,13 +69,8 @@ namespace KronosConsole.Commands
         private static string ResolveRegionName(string name)
         {
             if (name.Trim().StartsWith("https://www.nationstates.net/region="))
-            {
                 name = name.Trim()["https://www.nationstates.net/region=".Length..];
-            }
-            if (name.Contains("_"))
-            {
-                name = FromID(name);
-            }
+            if (name.Contains("_")) name = FromId(name);
 
             return name;
         }
@@ -112,7 +107,7 @@ namespace KronosConsole.Commands
             }
         }
 
-        public static string FromID(string text)
+        public static string FromId(string text)
         {
             return text?.Trim().ToLower(CultureInfo.InvariantCulture).Replace('_', ' ');
         }

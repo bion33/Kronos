@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Kronos.Commands
@@ -6,6 +7,6 @@ namespace Kronos.Commands
     public interface ICommand
     {
         /// <summary> Execute the command </summary>
-        public Task Run(string userAgent, bool interactiveLog = false);
+        public Task Run(string userAgent, Dictionary<string, string> userTags, bool interactiveLog = false);
     }
 }
