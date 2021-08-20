@@ -38,7 +38,7 @@ All configuration is stored in a file called "config.txt". This file is created 
 
 ### Keywords
 
-`UserInfo` - Contains the User-Agent, and must be configured to comply with NS script rules. The application will ask you to fill in your nation or email address at startup when this is empty or "config.txt" does not exist. Use a nation or email address you check frequently so that you NS can contact you if something goes wrong.
+`UserInfo` - Contains the User-Agent, and must be configured to comply with NS script rules. The application will ask you to fill in your nation or email address at startup when this is empty or "config.txt" does not exist. Use a nation or email address you check frequently so that NS can contact you if something goes wrong.
 
 `RaiderRegions` - Contains a comma-separated list of regions to consider "raider" (for example: `RaiderRegions: Lone Wolves United, HYDRA Command`). Regions which have an embassy with one of these regions, pending or not, will be marked as tagged in full sheets, included in detag sheets, and included under raider activity in operations reports. 
 
