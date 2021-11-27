@@ -55,7 +55,7 @@ All configuration is stored in a file called "config.txt". This file is created 
 
 > System.DllNotFoundException: Unable to load DLL 'libgdiplus'
 
-This error is encountered on Linux when "libgdiplus" is not installed. It usually can be installed trough your distribution's package manager. It is also included in Mono, and can otherwise be found [here](https://github.com/mono/libgdiplus).
+This error is encountered on Linux and MacOS when "libgdiplus" is not installed. It usually can be installed trough your distribution's package manager, or on MacOS through [brew](https://brew.sh) by running `brew install mono-libgdiplus`. It is also included in Mono, and can otherwise be found [here](https://github.com/mono/libgdiplus).
 
 #### Paused timer in CMD or PowerShell 
 
