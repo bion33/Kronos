@@ -1,6 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Flurl;
+using Flurl.Http;
 using KronosConsole.Repo;
 using KronosConsole.UI;
 
@@ -15,7 +18,7 @@ namespace KronosConsole
 
             // Greeting
             UIConsole.Show($"Kronos, at your service.\n{version}\n");
-            var lu = LatestUpdate();
+            var lu = await LatestUpdate();
             if (!lu.Equals(version))
                 UIConsole.Show(
                     $"The latest release of Kronos is {lu}. You can find it here: https://github.com/Krypton-Nova/Kronos/releases \n");
@@ -39,11 +42,20 @@ namespace KronosConsole
         }
 
         /// <summary> Get this version of Kronos from the README.md file </summary>
-        private static string GetVersion()
+        private static string GetVersion(string path = @"README.md")
         {
             try
             {
-                using var reader = File.OpenText(@"README.md");
+                // On non-windows system, the executable is launched in the context of the home directory instead of the
+                // location of the executable. This is a workaround to get the location of the executable & README path.
+                if (Environment.OSVersion.Platform == PlatformID.Unix ||
+                    Environment.OSVersion.Platform == PlatformID.MacOSX)
+                {
+                    var exePath = Path.GetDirectoryName(AppContext.BaseDirectory);
+                    path = Path.Combine(exePath ?? String.Empty, path);
+                }
+                
+                using var reader = File.OpenText(path);
                 var lines = reader.ReadToEnd();
                 foreach (var l in lines.Split("\n"))
                 {
@@ -60,13 +72,12 @@ namespace KronosConsole
         }
 
         /// <summary> Get the latest version of Kronos from the README.md file in the repository </summary>
-        private static string LatestUpdate()
+        private static async Task<string> LatestUpdate()
         {
-            var response =
-                new WebClient().DownloadString(
-                    "https://raw.githubusercontent.com/Krypton-Nova/Kronos/master/README.md");
-
-            foreach (var l in response.Split("\n"))
+            string resource = await new Url("https://raw.githubusercontent.com/Krypton-Nova/Kronos/master/README.md")
+                .GetStringAsync();
+            
+            foreach (var l in resource.Split("\n"))
             {
                 if (!l.Contains("Latest release: ")) continue;
 
