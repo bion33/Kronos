@@ -46,16 +46,7 @@ namespace KronosConsole
         {
             try
             {
-                // On non-windows system, the executable is launched in the context of the home directory instead of the
-                // location of the executable. This is a workaround to get the location of the executable & README path.
-                if (Environment.OSVersion.Platform == PlatformID.Unix ||
-                    Environment.OSVersion.Platform == PlatformID.MacOSX)
-                {
-                    var exePath = Path.GetDirectoryName(AppContext.BaseDirectory);
-                    path = Path.Combine(exePath ?? String.Empty, path);
-                }
-                
-                using var reader = File.OpenText(path);
+                using var reader = File.OpenText(Path.Combine(Shared.ExePath, path));
                 var lines = reader.ReadToEnd();
                 foreach (var l in lines.Split("\n"))
                 {

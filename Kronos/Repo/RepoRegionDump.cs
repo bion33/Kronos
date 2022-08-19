@@ -18,8 +18,8 @@ namespace Kronos.Repo
         private const string DUMP_URL = "https://www.nationstates.net/pages/regions.xml.gz";
 
         private static RepoRegionDump dump;
-        private readonly string dumpGz = $".Regions_{TimeUtil.DateForPath()}.xml.gz";
-        private readonly string dumpXml = $".Regions_{TimeUtil.DateForPath()}.xml";
+        private readonly string dumpGz = Path.Combine(Shared.ExePath, $".Regions_{TimeUtil.DateForPath()}.xml.gz");
+        private readonly string dumpXml = Path.Combine(Shared.ExePath, $".Regions_{TimeUtil.DateForPath()}.xml");
         private readonly string userAgent;
         private readonly Dictionary<string, string> userTags;
         private int numNations;
