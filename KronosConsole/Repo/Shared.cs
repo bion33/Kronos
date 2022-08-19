@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace KronosConsole.Repo
@@ -14,5 +15,8 @@ namespace KronosConsole.Repo
 
         /// <summary> Regions the user has associated with a particular tag </summary>
         public static Dictionary<string, string> UserTags => userTags ??= RepoStorage.GetUserTags();
+        
+        /// <summary> The location of the executable binary </summary>
+        public static string ExePath => AppContext.BaseDirectory;
     }
 }
