@@ -3,7 +3,6 @@
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <PackageId>Kronos</PackageId>
-		<Version>3.1.0</Version>
 		<Authors>David Ongenaert</Authors>
     </PropertyGroup>
 

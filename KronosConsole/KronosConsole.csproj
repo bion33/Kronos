@@ -3,7 +3,6 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <AssemblyName>Kronos-Console</AssemblyName>
-        <Version>3.2.4</Version>
         <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
     </PropertyGroup>
 
