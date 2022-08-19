@@ -48,7 +48,7 @@ namespace Kronos.Commands
             // Save
             var date = TimeUtil.DateForPath();
             Directory.CreateDirectory(date);
-            await File.WriteAllTextAsync($"{date}/Kronos-Ops_{date}.md", report);
+            await File.WriteAllTextAsync(Path.Combine(Shared.ExePath, $"{date}/Kronos-Ops_{date}.md"), report);
 
             if (interactiveLog) Console.Write("[done].\n");
         }

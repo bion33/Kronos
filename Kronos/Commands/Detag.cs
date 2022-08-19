@@ -102,7 +102,7 @@ namespace Kronos.Commands
             // Save
             var date = TimeUtil.DateForPath();
             Directory.CreateDirectory(date);
-            wb.SaveAs($"{date}/Kronos-Detag_{date}.xlsx");
+            wb.SaveAs(Path.Combine(Shared.ExePath, $"{date}/Kronos-Detag_{date}.xlsx"));
         }
     }
 }

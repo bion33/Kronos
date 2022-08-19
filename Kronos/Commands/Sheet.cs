@@ -110,8 +110,8 @@ namespace Kronos.Commands
 
             // Save
             var date = TimeUtil.DateForPath();
-            Directory.CreateDirectory(date);
-            wb.SaveAs($"{date}/Kronos-TimeSheet_{date}.xlsx");
+            Directory.CreateDirectory(Path.Combine(Shared.ExePath, date));
+            wb.SaveAs(Path.Combine(Shared.ExePath, $"{date}/Kronos-TimeSheet_{date}.xlsx"));
         }
     }
 }

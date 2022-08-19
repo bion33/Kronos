@@ -1,6 +1,6 @@
 # Kronos
 
-### Latest release: v3.3.0 (2021-08-17)
+### Latest release: v3.3.1 (2022-08-18)
 
 
 #### Author
@@ -38,7 +38,7 @@ All configuration is stored in a file called "config.txt". This file is created 
 
 ### Keywords
 
-`UserInfo` - Contains the User-Agent, and must be configured to comply with NS script rules. The application will ask you to fill in your nation or email address at startup when this is empty or "config.txt" does not exist. Use a nation or email address you check frequently so that NS can contact you if something goes wrong.
+`UserInfo` - Contains the User-Agent, and must be configured to comply with NS script rules. The application will ask you to fill in your nation or email address at startup when this is empty or "config.txt" does not exist. Use a nation or email address you check frequently so that you NS can contact you if something goes wrong.
 
 `RaiderRegions` - Contains a comma-separated list of regions to consider "raider" (for example: `RaiderRegions: Lone Wolves United, HYDRA Command`). Regions which have an embassy with one of these regions, pending or not, will be marked as tagged in full sheets, included in detag sheets, and included under raider activity in operations reports. 
 
@@ -55,7 +55,7 @@ All configuration is stored in a file called "config.txt". This file is created 
 
 > System.DllNotFoundException: Unable to load DLL 'libgdiplus'
 
-This error is encountered on Linux and MacOS when "libgdiplus" is not installed. It usually can be installed trough your distribution's package manager, or on MacOS through [brew](https://brew.sh) by running `brew install mono-libgdiplus`. It is also included in Mono, and can otherwise be found [here](https://github.com/mono/libgdiplus).
+This error is encountered on Linux when "libgdiplus" is not installed. It usually can be installed trough your distribution's package manager. It is also included in Mono, and can otherwise be found [here](https://github.com/mono/libgdiplus).
 
 #### Paused timer in CMD or PowerShell 
 
@@ -73,7 +73,7 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 ### v3.3.1 (2022-08-18)
 
 * Corrected a bug where the `README.md` file is not retrievable on UNIX and MacOS.
-* Corrected a HTTP timeout bug where the latest version number was retrievable.
+* Corrected a HTTP timeout bug where the latest version number was not retrievable.
 
 ### v3.3.0 (2021-08-17)
 
