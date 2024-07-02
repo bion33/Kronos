@@ -1,13 +1,12 @@
 # Kronos
 
-### Latest release: v3.3.1 (2022-08-18)
+## This tool is no longer actively maintained (since 2024-07-01)
+You can continue to use it while it works. While I will not maintain this tool, if you do encounter any bugs or would like to see new functionality added, you could fork this repository and have a go at it yourself :)
 
+### Latest release: v3.3.1 (2022-08-18)
 
 #### Author
 Krypton Nova (bion@disroot.org)</br>
-
-Feel free to send me a mail if you have suggestions or concerns regarding this application. I will maintain it until 2024-07-01 before re-evaluating its usefulness. Let me know if it is useful to you :)
-
 
 ## PURPOSE & USE
 
