@@ -5,9 +5,9 @@ dotnet pack
 cd ..
 
 cd ./KronosConsole
-dotnet publish --framework net6.0 --self-contained -r linux-x64 /p:PublishSingleFile=true
-dotnet publish --framework net6.0 --self-contained -r osx-x64 /p:PublishSingleFile=true
-dotnet publish --framework net6.0 --self-contained -r win-x64 /p:PublishSingleFile=true
+dotnet publish --framework net9.0 --self-contained -r linux-x64 /p:PublishSingleFile=true
+dotnet publish --framework net9.0 --self-contained -r osx-x64 /p:PublishSingleFile=true
+dotnet publish --framework net9.0 --self-contained -r win-x64 /p:PublishSingleFile=true
 cd ..
 
 rm -Rf ./build
@@ -16,11 +16,11 @@ mkdir -p ./build/linux
 mkdir -p ./build/osx
 mkdir -p ./build/windows
 
-mv ./Kronos/bin/Debug/Kronos*.nupkg ./Kronos/bin/Debug/Kronos.nupkg
-mv ./Kronos/bin/Debug/Kronos.nupkg ./build
-mv ./KronosConsole/bin/Debug/net6.0/linux-x64/publish/Kronos-Console ./build/linux/Kronos-Console
-mv ./KronosConsole/bin/Debug/net6.0/osx-x64/publish/Kronos-Console ./build/osx/Kronos-Console
-mv ./KronosConsole/bin/Debug/net6.0/win-x64/publish/Kronos-Console.exe ./build/windows/Kronos-Console.exe
+mv ./Kronos/bin/Release/Kronos*.nupkg ./Kronos/bin/Release/Kronos.nupkg
+mv ./Kronos/bin/Release/Kronos.nupkg ./build
+mv ./KronosConsole/bin/Release/net9.0/linux-x64/publish/Kronos-Console ./build/linux/Kronos-Console
+mv ./KronosConsole/bin/Release/net9.0/osx-x64/publish/Kronos-Console ./build/osx/Kronos-Console
+mv ./KronosConsole/bin/Release/net9.0/win-x64/publish/Kronos-Console.exe ./build/windows/Kronos-Console.exe
 
 cp ./README.md ./build/linux
 cp ./LICENSE.md ./build/linux

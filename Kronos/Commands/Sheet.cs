@@ -72,7 +72,7 @@ namespace Kronos.Commands
                         : "N"
                 };
                 ws.AddRow(i, row);
-                ws.Cell($"I{i}").SetValue(region.Url).Hyperlink = new XLHyperlink(region.Url);
+                ws.Cell($"I{i}").SetValue(region.Url).SetHyperlink(new XLHyperlink(region.Url));
             }
 
             // Style header

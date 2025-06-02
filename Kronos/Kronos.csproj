@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <PackageId>Kronos</PackageId>
 		<Authors>David Ongenaert</Authors>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="ClosedXML" Version="0.95.3" />
-      <PackageReference Include="TimeZoneConverter" Version="3.2.0" />
+      <PackageReference Include="ClosedXML" Version="0.105.0" />
+      <PackageReference Include="TimeZoneConverter" Version="7.0.0" />
     </ItemGroup>
 
 </Project>

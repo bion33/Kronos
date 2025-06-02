@@ -78,7 +78,7 @@ namespace Kronos.Commands
                     !region.Founderless ? "Y" : "N"
                 };
                 ws.AddRow(i, row);
-                ws.Cell($"G{i}").SetValue(region.Url).Hyperlink = new XLHyperlink(region.Url);
+                ws.Cell($"G{i}").SetValue(region.Url).SetHyperlink(new XLHyperlink(region.Url));
             }
 
             // Style header

@@ -9,7 +9,7 @@ namespace Kronos.Utilities
         /// <summary> Add objects as cell values for a specific row in a worksheet </summary>
         public static void AddRow(this IXLWorksheet sheet, int index, List<object> values)
         {
-            for (var i = 1; i < values.Count + 1; i++) sheet.Cell(index, i).Value = values[i - 1];
+            for (var i = 1; i < values.Count + 1; i++) sheet.Cell(index, i).Value = XLCellValue.FromObject(values[i - 1]);
         }
 
         /// <summary>

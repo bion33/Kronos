@@ -23,9 +23,12 @@ namespace KronosConsole
                 UIConsole.Show(
                     $"The latest release of Kronos is {lu}. You can find it here: https://github.com/Krypton-Nova/Kronos/releases \n");
 
-            // Read settings
-            var unusedUserAgent = Shared.UserAgent;
-            var unusedUserTags = Shared.UserTags;
+            // Deprecation message
+            UIConsole.Show("\nThis tool is no longer actively maintained (since 2024-07-01). If you encounter any bugs or would like to see new functionality added, feel free to fork the project at https://github.com/bion33/Kronos and have a go at it yourself :)\n");
+            
+            // Ensure settings are set
+            _ = Shared.UserAgent;
+            _ = Shared.UserTags;
 
             // Run until Quit command is given.
             while (true)
