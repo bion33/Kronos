@@ -3,7 +3,7 @@
 ## This tool is no longer actively maintained (since 2024-07-01)
 You can continue to use it while it works. While I will not maintain this tool, if you do encounter any bugs or would like to see new functionality added, you could fork this repository and have a go at it yourself :)
 
-### Latest release: v3.3.2 (2024-07-01)
+### Latest release: v3.3.2 (2025-06-02)
 
 #### Author
 Krypton Nova (bion@disroot.org)</br>
