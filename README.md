@@ -69,6 +69,11 @@ If you have any other issues, feel free to open a new issue [here](https://githu
 
 ## CHANGELOG
 
+### v3.3.2 (2025-06-02)
+
+* Added a deprecation notice to the console.
+* Upgrade to .NET 9.
+
 ### v3.3.1 (2022-08-18)
 
 * Corrected a bug where the `README.md` file is not retrievable on UNIX and MacOS.
